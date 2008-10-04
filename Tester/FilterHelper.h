@@ -1,6 +1,5 @@
 //ERROR CODES
 #pragma once
-#define _CRT_SECURE_NO_DEPRECATE
 
 #define DRV_SUCCESS						 (DWORD)0		//ALL OK
 

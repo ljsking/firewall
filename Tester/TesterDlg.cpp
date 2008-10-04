@@ -5,6 +5,7 @@
 #include "Tester.h"
 #include "TesterDlg.h"
 #include "FilterHelper.h"
+#include "..\\myDriver\\Filter.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -91,6 +92,12 @@ HCURSOR CTesterDlg::OnQueryDragIcon()
 void CTesterDlg::OnBnClickedButton1()
 {
 	FilterHelper helper;
+	FilterHelper filterDriver;
+	//we load the IPFilter Driver
+	filterDriver.LoadDriver(_T("IpFilterDriver"), _T("System32\\Drivers\\IpFltDrv.sys"), NULL, TRUE);
+	//we don't deregister the driver at destructor
+	filterDriver.SetRemovable(FALSE);
 	DWORD ret = helper.LoadDriver(_T("MyDriver"), NULL, NULL, TRUE);
+	helper.WriteIo(START_IP_HOOK, NULL, 0);
 	printf("LoadDriver is return %d\n", ret);
 }

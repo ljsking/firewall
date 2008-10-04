@@ -1,7 +1,9 @@
+#include "Filter.h"
 #include <ntddk.h>
+
 #define dprintf DbgPrint
-#define NT_DEVICE_NAME L"\\Device\\DrvFltIp"
-#define DOS_DEVICE_NAME L"\\DosDevices\\DrvFltIp"
+#define NT_DEVICE_NAME L"\\Device\\MyDriver"
+#define DOS_DEVICE_NAME L"\\DosDevices\\MyDriver"
 
 //
 // Define the various device type values.  Note that values used by Microsoft
@@ -9,7 +11,6 @@
 // by customers.
 //
 
-#define FILE_DEVICE_DRVFLTIP  0x00654322
 
 
 
@@ -18,19 +19,6 @@
 // that function codes 0-2047 are reserved for Microsoft Corporation, and
 // 2048-4095 are reserved for customers.
 //
-
-#define DRVFLTIP_IOCTL_INDEX  0x830
-
-//
-// The MONO device driver IOCTLs
-//
-#define START_IP_HOOK CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX,METHOD_BUFFERED, FILE_ANY_ACCESS)
-
-#define STOP_IP_HOOK CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+1, METHOD_BUFFERED, FILE_ANY_ACCESS)
-
-#define ADD_FILTER CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+2, METHOD_BUFFERED, FILE_WRITE_ACCESS)
-
-#define CLEAR_FILTER CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+3, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 
 NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
@@ -43,7 +31,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
     UNICODE_STRING         deviceNameUnicodeString;
     UNICODE_STRING         deviceLinkUnicodeString;
 	
-	dprintf("myDriver.SYS: entering DriverEntry\n");
+	dprintf("MyDriver.SYS: entering DriverEntry\n");
 	//we have to create the device
 	RtlInitUnicodeString(&deviceNameUnicodeString, NT_DEVICE_NAME);
 
@@ -73,9 +61,9 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
         // Create dispatch points for device control, create, close.
         //
 
-        //DriverObject->MajorFunction[IRP_MJ_CREATE]         =
-        //DriverObject->MajorFunction[IRP_MJ_CLOSE]          =
-        //DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DrvDispatch;
+        DriverObject->MajorFunction[IRP_MJ_CREATE]         = 
+        DriverObject->MajorFunction[IRP_MJ_CLOSE]          =
+        DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DrvDispatch;
         DriverObject->DriverUnload                         = DrvUnload;
     }
 
