@@ -95,6 +95,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;..\MyDriver\objchk_wlh_x86\i386\MyDriver.sys&quot; &quot;.\&quot;"
 			/>
 		</Configuration>
 		<Configuration

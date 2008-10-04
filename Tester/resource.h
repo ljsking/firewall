@@ -5,6 +5,8 @@
 #define IDD_TESTER_DIALOG               102
 #define IDR_MAINFRAME                   128
 #define IDC_BUTTON1                     1000
+#define IDC_BUTTON2                     1001
+#define IDC_BUTTON3                     1002
 
 // Next default values for new objects
 // 

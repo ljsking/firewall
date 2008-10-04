@@ -2,20 +2,42 @@
 //
 
 #include "stdafx.h"
-#include "Tester.h"
-#include "TesterDlg.h"
 #include "FilterHelper.h"
 #include "..\\myDriver\\Filter.h"
+#include "Tester.h"
+#include "TesterDlg.h"
+
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+CString GetLocalIP()        // local IP 획득
+{
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	char name[255];
+	CString ip; // 여기에 lcoal ip가 저장됩니다.
+	PHOSTENT hostinfo;
+	wVersionRequested = MAKEWORD( 2, 0 );
+
+	if ( WSAStartup( wVersionRequested, &wsaData ) == 0 )
+	{
+		if( gethostname ( name, sizeof(name)) == 0)
+		{
+			if((hostinfo = gethostbyname(name)) != NULL)
+			{
+				ip = inet_ntoa (*(struct in_addr *)*hostinfo->h_addr_list);
+			}
+		}      
+		WSACleanup( );
+	} 
+	return ip;
+}
 
 // CTesterDlg 대화 상자
-
-
-
 
 CTesterDlg::CTesterDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CTesterDlg::IDD, pParent)
@@ -33,6 +55,8 @@ BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
 	ON_BN_CLICKED(IDC_BUTTON1, &CTesterDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON2, &CTesterDlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON3, &CTesterDlg::OnBnClickedButton3)
 END_MESSAGE_MAP()
 
 
@@ -47,7 +71,11 @@ BOOL CTesterDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+	//we load the IPFilter Driver
+	filterDriver.LoadDriver(_T("IpFilterDriver"), _T("System32\\Drivers\\IpFltDrv.sys"), NULL, TRUE);
+	//we don't deregister the driver at destructor
+	filterDriver.SetRemovable(FALSE);
+	DWORD ret = helper.LoadDriver(_T("MyDriver"), NULL, NULL, TRUE);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -91,13 +119,44 @@ HCURSOR CTesterDlg::OnQueryDragIcon()
 
 void CTesterDlg::OnBnClickedButton1()
 {
-	FilterHelper helper;
-	FilterHelper filterDriver;
-	//we load the IPFilter Driver
-	filterDriver.LoadDriver(_T("IpFilterDriver"), _T("System32\\Drivers\\IpFltDrv.sys"), NULL, TRUE);
-	//we don't deregister the driver at destructor
-	filterDriver.SetRemovable(FALSE);
-	DWORD ret = helper.LoadDriver(_T("MyDriver"), NULL, NULL, TRUE);
 	helper.WriteIo(START_IP_HOOK, NULL, 0);
-	printf("LoadDriver is return %d\n", ret);
+}
+
+void CTesterDlg::OnBnClickedButton2()
+{
+	helper.WriteIo(STOP_IP_HOOK, NULL, 0);
+}
+
+void CTesterDlg::OnBnClickedButton3()
+{
+	UpdateData();
+
+	DWORD result;
+
+	IPFilter pf;
+
+	char ascii[256];
+	wcstombs( ascii, GetLocalIP().GetBuffer(), 256 );
+
+  	pf.protocol = 0;									
+	pf.destinationIp = inet_addr("222.122.84.250");
+	pf.sourceIp = inet_addr(ascii);
+	pf.destinationMask = inet_addr("255.255.255.255");
+	pf.sourceMask = inet_addr("255.255.255.255");
+	pf.destinationPort = htons(0);
+	pf.sourcePort = htons(0);
+	pf.drop = TRUE;
+
+	result = AddFilter(pf);		//send the rule
+}
+
+BOOL CTesterDlg::AddFilter(IPFilter &pf)
+{
+	//we send the rule to the driver
+	DWORD result = helper.WriteIo(ADD_FILTER, &pf, sizeof(pf));
+
+	/*if (result != DRV_SUCCESS) 
+		return FALSE;
+	else*/
+		return TRUE;
 }

@@ -2,6 +2,8 @@
 //
 
 #include "stdafx.h"
+#include "FilterHelper.h"
+#include "..\\myDriver\\Filter.h"
 #include "Tester.h"
 #include "TesterDlg.h"
 
