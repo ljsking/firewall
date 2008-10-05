@@ -415,6 +415,96 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 	PacketLengthsum +=PacketLength;
 	dprintf("PacketLength 총 합: %d", PacketLengthsum);
 
+	//otherwise, we compare the packet with our rules
+	while(aux != NULL)
+	{
+		dprintf("Comparing with Rule %d", countRule);
+
+		//if protocol is the same....
+		if(aux->ipf.protocol == 0 || ipp->ipProtocol == aux->ipf.protocol)
+		{
+			//we look in source Address
+			if(aux->ipf.sourceIp != 0 && (ipp->ipSource & aux->ipf.sourceMask) != aux->ipf.sourceIp)
+			{
+				aux=aux->next;
+			
+				countRule++;
+				continue;
+			}
+									
+			// we look in destination address
+			if(aux->ipf.destinationIp != 0 && (ipp->ipDestination & aux->ipf.destinationMask) != aux->ipf.destinationIp)
+			{
+				aux=aux->next;
+
+				countRule++;
+				continue;
+			}
+			
+			//if we have a tcp packet, we look in ports
+			//tcp, protocol = 6
+            if(ipp->ipProtocol == 6) 
+			{
+                tcph=(TCPHeader *)Packet; 
+                dprintf("티씨피입니다\n");
+                dprintf("%d     %d\n",tcph->sourcePort, aux->ipf.sourcePort);
+				if(aux->ipf.sourcePort == 0 || tcph->sourcePort == aux->ipf.sourcePort)
+				{ 
+					if(aux->ipf.destinationPort == 0 || tcph->destinationPort == aux->ipf.destinationPort) //puerto tcp destino
+					{
+
+                      	//now we decided what to do with the packet
+						if(aux->ipf.drop)
+                        {
+                            dprintf("TCP Packet Drop\n");
+                            return  PF_DROP;
+                        }
+
+							else
+								return PF_FORWARD;
+					}
+				}
+			}
+				
+			//udp, protocol = 17
+			else if(ipp->ipProtocol == 17) 
+			{
+				udph=(UDPHeader *)Packet; 
+                 dprintf("유디피입니다\n");
+
+				if(aux->ipf.sourcePort == 0 || udph->sourcePort == aux->ipf.sourcePort) 
+				{ 
+					if(aux->ipf.destinationPort == 0 || udph->destinationPort == aux->ipf.destinationPort) 
+					{
+                      	//now we decided what to do with the packet
+						if(aux->ipf.drop)
+					    {
+                            dprintf("UDP Packet Drop\n");
+                            return  PF_DROP;
+                        }	
+						
+						else
+							return PF_FORWARD;
+					}
+				}
+			}	
+			
+			else
+			{
+				//for other packet we dont look more and ....
+				//now we decided what to do with the packet
+				if(aux->ipf.drop)
+					return  PF_DROP;
+				else
+					return PF_FORWARD;
+			}	
+		}
+		
+		//compare with the next rule
+		countRule++;
+		aux=aux->next;
+	}
+
 	return PF_FORWARD;
 }
 
