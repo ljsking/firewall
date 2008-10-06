@@ -22,6 +22,9 @@
 #define IDC_BWORD_ADD                   1015
 #define IDC_BWORD_DELETE                1016
 #define IDC_COMBO1                      1017
+#define IDC_CHECK1                      1018
+#define IDC_ERULE_SOURCE_IP2            1020
+#define IDC_ERULE_SOURCE_MASK2          1021
 
 // Next default values for new objects
 // 
@@ -29,7 +32,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        130
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1019
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

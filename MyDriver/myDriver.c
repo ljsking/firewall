@@ -268,6 +268,7 @@ NTSTATUS AddFilterToList(IPFilter *pf)
 	}
 
 	//fill the new structure
+	aux->ipf.id = pf->id;
 	aux->ipf.destinationIp = pf->destinationIp;
 	aux->ipf.sourceIp = pf->sourceIp;
 
@@ -336,7 +337,7 @@ NTSTATUS AddWordToList(WordFilter *wf)
 
 	//fill the new structure
 	aux->wordf.id = wf->id;
-	_tcscpy(aux->wordf.word, wf->word);
+	strcpy(aux->wordf.word, wf->word);
 	
 	//Add the new filter to the filter list
 	if(firstWord == NULL)
@@ -460,32 +461,39 @@ NTSTATUS SetFilterFunction(PacketFilterExtensionPtr filterFunction)
 
 Routine Description:
 
-    Filter each packet is received or sended
-
-	To see parameters and return you can read it in MSDN
+    Filter the packet by word rules
 --*/
 
-PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned char *Packet, IN unsigned int PacketLength, IN unsigned int RecvInterfaceIndex, IN unsigned int SendInterfaceIndex, IN unsigned long RecvLinkNextHop, IN unsigned long SendLinkNextHop)
+PF_FORWARD_ACTION FilterByWords(IPPacket *ipp, unsigned char *Packet)
 {
-	IPPacket *ipp;
+	struct wordList *aux = firstWord;
+	if(ipp->ipProtocol != 17)
+		return PF_FORWARD;
+	while(aux != NULL)
+	{
+		if(strstr(Packet + sizeof(UDPHeader), aux->wordf.word) != NULL)
+        {
+            dprintf("Detected word\n");
+            return PF_DROP;
+        }
+		aux=aux->next;
+	}
+	return PF_FORWARD;
+}
+
+/*++
+
+Routine Description:
+
+    Filter the packet by rules
+--*/
+
+PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
+{
 	TCPHeader *tcph;
 	UDPHeader *udph;
-
 	int countRule=0;
-
 	struct filterList *aux = firstFilter;
-
-	//we "extract" the ip Header 
-	ipp=(IPPacket *)PacketHeader;
-
-	dprintf("Tama?: %x, %d", PacketLength, RecvInterfaceIndex);
-	dprintf("Source: %x\nDestination: %x\nProtocol: %d", ipp->ipSource, ipp->ipDestination, ipp->ipProtocol);
-
-	dprintf("PacketLength: %d", PacketLength);
-	PacketLengthsum +=PacketLength;
-	dprintf("PacketLength ÃÑ ÇÕ: %d", PacketLengthsum);
-
-	//otherwise, we compare the packet with our rules
 	while(aux != NULL)
 	{
 		dprintf("Comparing with Rule %d", countRule);
@@ -529,9 +537,8 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
                             dprintf("TCP Packet Drop\n");
                             return  PF_DROP;
                         }
-
-							else
-								return PF_FORWARD;
+						else
+							return PF_FORWARD;
 					}
 				}
 			}
@@ -558,25 +565,43 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 					}
 				}
 			}	
-			
-			else
-			{
-				//for other packet we dont look more and ....
-				//now we decided what to do with the packet
-				if(aux->ipf.drop)
-					return  PF_DROP;
-				else
-					return PF_FORWARD;
-			}	
 		}
 		
 		//compare with the next rule
 		countRule++;
 		aux=aux->next;
 	}
-
 	return PF_FORWARD;
 }
+
+/*++
+
+Routine Description:
+
+    Filter each packet is received or sended
+
+	To see parameters and return you can read it in MSDN
+--*/
+
+PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned char *Packet, IN unsigned int PacketLength, IN unsigned int RecvInterfaceIndex, IN unsigned int SendInterfaceIndex, IN unsigned long RecvLinkNextHop, IN unsigned long SendLinkNextHop)
+{
+	IPPacket *ipp;
+
+	//we "extract" the ip Header 
+	ipp=(IPPacket *)PacketHeader;
+
+	dprintf("Tama?: %x, %d", PacketLength, RecvInterfaceIndex);
+	dprintf("Source: %x\nDestination: %x\nProtocol: %d", ipp->ipSource, ipp->ipDestination, ipp->ipProtocol);
+
+	dprintf("PacketLength: %d", PacketLength);
+	PacketLengthsum +=PacketLength;
+	dprintf("PacketLength ÃÑ ÇÕ: %d", PacketLengthsum);
+	if(PF_FORWARD==FilterByWords(ipp, Packet))
+		return FilterByRules(ipp, Packet);
+	else
+		return PF_DROP;
+}
+
 
 /*++
 

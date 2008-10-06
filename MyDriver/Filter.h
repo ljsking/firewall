@@ -29,6 +29,7 @@ typedef struct firewallSetting
 //struct to define filter rules
 typedef struct filter
 {
+	ULONG id;
 	USHORT protocol;		//protocol used
 
 	ULONG sourceIp;			//source ip address
@@ -56,7 +57,6 @@ typedef struct wordFilter
 typedef struct filterList
 {
 	IPFilter ipf;
-
 	struct filterList *next;
 }FilterList;
 
@@ -64,7 +64,6 @@ typedef struct filterList
 typedef struct wordList
 {
 	WordFilter wordf;
-
 	struct wordList *next;
 }WordList;
 
