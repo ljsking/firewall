@@ -41,6 +41,14 @@ CString GetLocalIP()        // local IP 획득
 
 CTesterDlg::CTesterDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CTesterDlg::IDD, pParent)
+	, m_myIP(_T("192.168.0.1"))
+	, m_sourceIP(_T("0"))
+	, m_sourceMask(_T("255.255.255.255"))
+	, m_sourcePort(_T("0"))
+	, m_destIP(_T("0"))
+	, m_destMask(_T("255.255.255.255"))
+	, m_destPort(_T("0"))
+	, m_word(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -48,15 +56,37 @@ CTesterDlg::CTesterDlg(CWnd* pParent /*=NULL*/)
 void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_MY_IP, m_myIP);
+	DDX_Control(pDX, IDC_BSTART, m_bStart);
+	DDX_Control(pDX, IDC_BSTOP, m_bStop);
+	DDX_Text(pDX, IDC_ERULE_SOURCE_IP, m_sourceIP);
+	DDX_Text(pDX, IDC_ERULE_SOURCE_MASK, m_sourceMask);
+	DDX_Text(pDX, IDC_ERULE_SOURCE_PORT, m_sourcePort);
+	DDX_Text(pDX, IDC_ERULE_DEST_IP, m_destIP);
+	DDX_Text(pDX, IDC_ERULE_DEST_MASK, m_destMask);
+	DDX_Text(pDX, IDC_ERULE_DEST_PORT, m_destPort);
+	DDX_Control(pDX, IDC_BRULE_ADD, m_bRuleAdd);
+	DDX_Control(pDX, IDC_BRULE_DELETE, m_bRuleDelete);
+	DDX_Control(pDX, IDC_LIST_RULE, m_listRules);
+	DDX_Control(pDX, IDC_LIST_WORD, m_listWords);
+	DDX_Text(pDX, IDC_EWORD, m_word);
+	DDX_Control(pDX, IDC_BWORD_ADD, m_bWordAdd);
+	DDX_Control(pDX, IDC_BWORD_DELETE, m_bWordDelete);
 }
 
 BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
-	ON_BN_CLICKED(IDC_BUTTON1, &CTesterDlg::OnBnClickedButton1)
-	ON_BN_CLICKED(IDC_BUTTON2, &CTesterDlg::OnBnClickedButton2)
-	ON_BN_CLICKED(IDC_BUTTON3, &CTesterDlg::OnBnClickedButton3)
+	ON_BN_CLICKED(IDC_BSTART, &CTesterDlg::OnBnClickedBStart)
+	ON_BN_CLICKED(IDC_BSTOP, &CTesterDlg::OnBnClickedBStop)
+	ON_BN_CLICKED(IDC_BRULE_ADD, &CTesterDlg::OnBnClickedBRuleAdd)
+	ON_BN_CLICKED(IDC_BWORD_ADD, &CTesterDlg::OnBnClickedBwordAdd)
+	ON_LBN_SELCANCEL(IDC_LIST_WORD, &CTesterDlg::OnLbnSelcancelListWord)
+	ON_LBN_SELCHANGE(IDC_LIST_WORD, &CTesterDlg::OnLbnSelchangeListWord)
+	ON_BN_CLICKED(IDC_BWORD_DELETE, &CTesterDlg::OnBnClickedBwordDelete)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_RULE, &CTesterDlg::OnLvnItemchangedListRule)
+	ON_BN_CLICKED(IDC_BRULE_DELETE, &CTesterDlg::OnBnClickedBruleDelete)
 END_MESSAGE_MAP()
 
 
@@ -71,11 +101,23 @@ BOOL CTesterDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
+	m_myIP = GetLocalIP();
+
 	//we load the IPFilter Driver
 	filterDriver.LoadDriver(_T("IpFilterDriver"), _T("System32\\Drivers\\IpFltDrv.sys"), NULL, TRUE);
 	//we don't deregister the driver at destructor
 	filterDriver.SetRemovable(FALSE);
 	DWORD ret = helper.LoadDriver(_T("MyDriver"), NULL, NULL, TRUE);
+
+	int order = 0;
+	m_listRules.InsertColumn(order++,_T("Source IP"), LVCFMT_LEFT, 120);
+	m_listRules.InsertColumn(order++,_T("Mask"), LVCFMT_LEFT, 120);
+	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 100);
+	m_listRules.InsertColumn(order++,_T("Dest IP"), LVCFMT_LEFT, 120);
+	m_listRules.InsertColumn(order++,_T("Mask"), LVCFMT_LEFT, 120);
+	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 100);
+
+	UpdateData(false);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -117,17 +159,27 @@ HCURSOR CTesterDlg::OnQueryDragIcon()
 }
 
 
-void CTesterDlg::OnBnClickedButton1()
+void CTesterDlg::OnBnClickedBStart()
 {
+	m_bStart.EnableWindow(0);
+	m_bStop.EnableWindow(1);
+	m_bRuleAdd.EnableWindow(1);
+	m_bWordAdd.EnableWindow(1);
 	helper.WriteIo(START_IP_HOOK, NULL, 0);
 }
 
-void CTesterDlg::OnBnClickedButton2()
+void CTesterDlg::OnBnClickedBStop()
 {
+	m_bStart.EnableWindow(1);
+	m_bStop.EnableWindow(0);
+	m_bRuleAdd.EnableWindow(0);
+	m_bRuleDelete.EnableWindow(0);
+	m_bWordAdd.EnableWindow(0);
+	m_bWordDelete.EnableWindow(0);
 	helper.WriteIo(STOP_IP_HOOK, NULL, 0);
 }
 
-void CTesterDlg::OnBnClickedButton3()
+void CTesterDlg::OnBnClickedBRuleAdd()
 {
 	UpdateData();
 
@@ -136,7 +188,7 @@ void CTesterDlg::OnBnClickedButton3()
 	IPFilter pf;
 
 	char ascii[256];
-	wcstombs( ascii, GetLocalIP().GetBuffer(), 256 );
+	wcstombs( ascii, m_myIP, 256 );
 
   	pf.protocol = 0;									
 	pf.destinationIp = inet_addr("222.122.84.250");
@@ -148,15 +200,71 @@ void CTesterDlg::OnBnClickedButton3()
 	pf.drop = TRUE;
 
 	result = AddFilter(pf);		//send the rule
+
 }
 
 BOOL CTesterDlg::AddFilter(IPFilter &pf)
 {
+	UpdateData();
 	//we send the rule to the driver
-	DWORD result = helper.WriteIo(ADD_FILTER, &pf, sizeof(pf));
+	//DWORD result = helper.WriteIo(ADD_FILTER, &pf, sizeof(pf));
+	int index = m_listRules.GetItemCount();
+	int subIndex = 1;
+	m_listRules.InsertItem(index, m_sourceIP);
+	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourceMask, 0, 0, 0, 0, 0);
+	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourcePort, 0, 0, 0, 0, 0);
+	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_destIP, 0, 0, 0, 0, 0);
+	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_destMask, 0, 0, 0, 0, 0);
+	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_destPort, 0, 0, 0, 0, 0);
 
 	/*if (result != DRV_SUCCESS) 
 		return FALSE;
 	else*/
 		return TRUE;
+}
+void CTesterDlg::OnBnClickedBwordAdd()
+{
+	UpdateData();
+	m_listWords.AddString(m_word);
+	m_word = "";
+	UpdateData(false);
+}
+
+void CTesterDlg::OnLbnSelcancelListWord()
+{
+	m_bWordDelete.EnableWindow(0);
+}
+
+void CTesterDlg::OnLbnSelchangeListWord()
+{
+	m_bWordDelete.EnableWindow(1);
+}
+
+void CTesterDlg::OnBnClickedBwordDelete()
+{
+	int sel = m_listWords.GetCurSel();
+	CString selected;
+	m_listWords.GetText(sel, selected);
+	TRACE("%d %s\n", sel, selected);
+	m_listWords.DeleteString(sel);
+	m_bWordDelete.EnableWindow(0);
+}
+
+void CTesterDlg::OnLvnItemchangedListRule(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	m_bRuleDelete.EnableWindow(1);
+	*pResult = 0;
+}
+
+void CTesterDlg::OnBnClickedBruleDelete()
+{
+	POSITION pos = m_listRules.GetFirstSelectedItemPosition();
+	while (pos)
+	{
+		int nItem = m_listRules.GetNextSelectedItem(pos);
+		m_listRules.DeleteItem(nItem);
+		m_bRuleDelete.EnableWindow(0);
+	}
+
 }

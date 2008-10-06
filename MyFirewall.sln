@@ -6,9 +6,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myDriver", "MyDriver\myDriver.vcproj", "{B276EFE6-1FAA-4390-918D-F89868A3F233}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tester", "Tester\Tester.vcproj", "{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}"
-	ProjectSection(ProjectDependencies) = postProject
-		{B276EFE6-1FAA-4390-918D-F89868A3F233} = {B276EFE6-1FAA-4390-918D-F89868A3F233}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
