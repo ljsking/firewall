@@ -17,6 +17,7 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 지원입니다.
 	BOOL AddFilter(IPFilter &pf);
+	BOOL AddWord(WordFilter &wf);
 
 
 // 구현입니다.
@@ -56,4 +57,5 @@ protected:
 	CString m_word;
 	CButton m_bWordAdd;
 	CButton m_bWordDelete;
+	int m_protocolType;
 };

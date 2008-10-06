@@ -13,6 +13,18 @@
 #define STOP_IP_HOOK CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+1, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define ADD_FILTER CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+2, METHOD_BUFFERED, FILE_WRITE_ACCESS)
 #define CLEAR_FILTER CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+3, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define ADD_WORD CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+4, METHOD_BUFFERED, FILE_WRITE_ACCESS)
+
+
+//struct to define filter rules
+typedef struct firewallSetting
+{
+	BOOLEAN IPFilter;			//if true, the packet will be drop, otherwise the packet pass
+	BOOLEAN WordFilter;			//if true, the packet will be drop, otherwise the packet pass
+	BOOLEAN PortMonitor;			//if true, the packet will be drop, otherwise the packet pass
+	BOOLEAN SessionMonitor;			//if true, the packet will be drop, otherwise the packet pass
+
+}FirewallSetting;
 
 //struct to define filter rules
 typedef struct filter
@@ -32,6 +44,12 @@ typedef struct filter
 
 }IPFilter;
 
+typedef struct wordFilter
+{
+	ULONG id;
+	char word[10];
+}WordFilter;
+
 
 
 //struct to build a linked list 
@@ -42,6 +60,13 @@ typedef struct filterList
 	struct filterList *next;
 }FilterList;
 
+//struct to build a linked list 
+typedef struct wordList
+{
+	WordFilter wordf;
+
+	struct wordList *next;
+}WordList;
 
 //Ip Header
 typedef struct IPHeader 

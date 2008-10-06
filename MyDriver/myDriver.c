@@ -1,6 +1,7 @@
 #include <ntddk.h>
 #include <ntddndis.h>
 #include <pfhook.h>
+#include <tchar.h>
 #include "Filter.h"
 
 #define dprintf DbgPrint
@@ -12,10 +13,14 @@ VOID DrvUnload(IN PDRIVER_OBJECT DriverObject);
 NTSTATUS SetFilterFunction(PacketFilterExtensionPtr filterFunction);
 PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned char *Packet, IN unsigned int PacketLength, IN unsigned int RecvInterfaceIndex, IN unsigned int SendInterfaceIndex, IN unsigned long RecvLinkNextHop, IN unsigned long SendLinkNextHop);
 NTSTATUS AddFilterToList(IPFilter *pf);
+NTSTATUS AddWordToList(WordFilter *wf);
 void ClearFilterList(void);
+void ClearWordList(void);
 
-struct filterList *first = NULL;
-struct filterList *last = NULL;
+struct filterList *firstFilter = NULL;
+struct filterList *lastFilter = NULL;
+struct wordList *firstWord = NULL;
+struct wordList *lastWord = NULL;
 unsigned int PacketLengthsum = 0;
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
@@ -96,6 +101,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	ULONG               ioControlCode;
 	NTSTATUS            ntStatus;
 	IPFilter			*nf;
+	WordFilter			*wf;
 
 	Irp->IoStatus.Status      = STATUS_SUCCESS;
 	Irp->IoStatus.Information = 0;
@@ -124,9 +130,10 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		break;
 
 	case IRP_MJ_DEVICE_CONTROL:
-		dprintf("DrvFltIp.SYS: IRP_MJ_DEVICE_CONTROL\n");
 		ioControlCode = irpStack->Parameters.DeviceIoControl.IoControlCode;
+		dprintf("DrvFltIp.SYS: IRP_MJ_DEVICE_CONTROL :%d\n", ioControlCode);
 
+		//memcpy(lpOutBuf, myTemp, nOutBufSize);
 		switch (ioControlCode)
 		{
 			// ioctl code to start filtering
@@ -152,9 +159,19 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			}
 			break;
 
+		case ADD_WORD:
+			dprintf("DrvFltIp.SYS: ADD_WORD1 %d %d\n", inputBufferLength, sizeof(WordFilter));
+			if(inputBufferLength == sizeof(WordFilter))
+			{
+				dprintf("DrvFltIp.SYS: ADD_WORD2\n");
+				wf = (WordFilter *)ioBuffer;
+				AddWordToList(wf);
+			}
+			break;
+
 			// ioctl to free filter rule list
 		case CLEAR_FILTER:
-		
+			ClearFilterList();
 			dprintf("DrvFltIp.SYS: CLEAR_FILTER\n");
 			break;
 
@@ -206,10 +223,11 @@ VOID DrvUnload(IN PDRIVER_OBJECT DriverObject)
 
 	dprintf("DrvFltIp.SYS: Unloading\n");
 
-    //SetFilterFunction(NULL);
+    SetFilterFunction(NULL);
 
 	// Free any resources
 	ClearFilterList();
+	ClearWordList();
    
     // Delete the symbolic link
     RtlInitUnicodeString(&deviceLinkUnicodeString, DOS_DEVICE_NAME);
@@ -265,16 +283,16 @@ NTSTATUS AddFilterToList(IPFilter *pf)
 
 	
 	//Add the new filter to the filter list
-	if(first == NULL)
+	if(firstFilter == NULL)
 	{
-		first = last = aux;
-		first->next = NULL;
+		firstFilter = lastFilter = aux;
+		firstFilter->next = NULL;
 	}
 	else
 	{
-		last->next = aux;
-		last = aux;
-		last->next = NULL;
+		lastFilter->next = aux;
+		lastFilter = aux;
+		lastFilter->next = NULL;
 	}
 
 	dprintf("Rule Added2\n\t%x %x\n\t%x %x\n\t%x\n\t%x", aux->ipf.sourceIp
@@ -283,6 +301,58 @@ NTSTATUS AddFilterToList(IPFilter *pf)
 														, aux->ipf.destinationMask
 														, aux->ipf.sourcePort
 														, aux->ipf.destinationPort);
+
+	return STATUS_SUCCESS;
+}
+
+/*++
+
+Routine Description:
+
+    Add a word to the word list
+
+Arguments:
+
+     wf - pointer to word
+
+
+Return Value:
+
+    STATUS_SUCCESS if successful,
+    STATUS_INSUFFICIENT_RESOURCES otherwise
+ 
+--*/
+NTSTATUS AddWordToList(WordFilter *wf)
+{
+	WordList *aux = NULL;
+	// first, we reserve memory (non paged) to the new filter
+	aux=(struct wordList *) ExAllocatePool(NonPagedPool, sizeof(struct wordList));
+
+	if(aux == NULL)
+	{
+		dprintf("Problem reserving memory\n");
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	//fill the new structure
+	aux->wordf.id = wf->id;
+	_tcscpy(aux->wordf.word, wf->word);
+	
+	//Add the new filter to the filter list
+	if(firstWord == NULL)
+	{
+		firstWord = lastWord = aux;
+		firstWord->next = NULL;
+	}
+	else
+	{
+		lastWord->next = aux;
+		lastWord = aux;
+		lastWord->next = NULL;
+	}
+
+	dprintf("Word Added\n\t%d %s\n", aux->wordf.id
+									, aux->wordf.word);
 
 	return STATUS_SUCCESS;
 }
@@ -403,7 +473,7 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 
 	int countRule=0;
 
-	struct filterList *aux = first;
+	struct filterList *aux = firstFilter;
 
 	//we "extract" the ip Header 
 	ipp=(IPPacket *)PacketHeader;
@@ -528,16 +598,50 @@ void ClearFilterList(void)
 	//free the linked list
 	dprintf("Removing the filter List...");
 	
-	while(first != NULL)
+	while(firstFilter != NULL)
 	{
-		aux = first;
-		first = first->next;
+		aux = firstFilter;
+		firstFilter = firstFilter->next;
 		ExFreePool(aux);
 
 		dprintf("One Rule removed");
 	}
 
-	first = last = NULL;
+	firstFilter = lastFilter = NULL;
+
+	dprintf("Removed is complete.");
+}
+
+/*++
+
+Routine Description:
+
+    Remove the linked list where the words were saved.
+
+Arguments:
+
+
+Return Value:
+
+ 
+--*/
+void ClearWordList(void)
+{
+	struct wordList *aux = NULL;
+
+	//free the linked list
+	dprintf("Removing the word List...");
+	
+	while(firstWord != NULL)
+	{
+		aux = firstWord;
+		firstWord = firstWord->next;
+		ExFreePool(aux);
+
+		dprintf("One Word removed");
+	}
+
+	firstWord = lastWord = NULL;
 
 	dprintf("Removed is complete.");
 }

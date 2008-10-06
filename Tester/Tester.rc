@@ -102,6 +102,8 @@ BEGIN
     PUSHBUTTON      "Add",IDC_BWORD_ADD,294,175,50,14,WS_DISABLED
     PUSHBUTTON      "Delete",IDC_BWORD_DELETE,354,175,50,14,WS_DISABLED
     CONTROL         "",IDC_LIST_RULE,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,49,397,50
+    LTEXT           "Protocol",IDC_STATIC,314,105,33,14,SS_CENTERIMAGE
+    COMBOBOX        IDC_COMBO1,313,126,33,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
 
@@ -162,6 +164,23 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_TESTER_DIALOG DLGINIT
+BEGIN
+    IDC_COMBO1, 0x403, 4, 0
+0x6c41, 0x006c, 
+    IDC_COMBO1, 0x403, 4, 0
+0x4354, 0x0050, 
+    IDC_COMBO1, 0x403, 4, 0
+0x4455, 0x0050, 
+    0
+END
 
 #endif    // Korean resources
 /////////////////////////////////////////////////////////////////////////////

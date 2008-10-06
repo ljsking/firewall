@@ -49,6 +49,7 @@ CTesterDlg::CTesterDlg(CWnd* pParent /*=NULL*/)
 	, m_destMask(_T("255.255.255.255"))
 	, m_destPort(_T("0"))
 	, m_word(_T(""))
+	, m_protocolType(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -72,6 +73,7 @@ void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EWORD, m_word);
 	DDX_Control(pDX, IDC_BWORD_ADD, m_bWordAdd);
 	DDX_Control(pDX, IDC_BWORD_DELETE, m_bWordDelete);
+	DDX_CBIndex(pDX, IDC_COMBO1, m_protocolType);
 }
 
 BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
@@ -110,12 +112,13 @@ BOOL CTesterDlg::OnInitDialog()
 	DWORD ret = helper.LoadDriver(_T("MyDriver"), NULL, NULL, TRUE);
 
 	int order = 0;
-	m_listRules.InsertColumn(order++,_T("Source IP"), LVCFMT_LEFT, 120);
-	m_listRules.InsertColumn(order++,_T("Mask"), LVCFMT_LEFT, 120);
-	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 100);
-	m_listRules.InsertColumn(order++,_T("Dest IP"), LVCFMT_LEFT, 120);
-	m_listRules.InsertColumn(order++,_T("Mask"), LVCFMT_LEFT, 120);
-	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 100);
+	m_listRules.InsertColumn(order++,_T("Protocol"), LVCFMT_LEFT, 90);
+	m_listRules.InsertColumn(order++,_T("Source IP"), LVCFMT_LEFT, 110);
+	m_listRules.InsertColumn(order++,_T("Mask"), LVCFMT_LEFT, 110);
+	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 80);
+	m_listRules.InsertColumn(order++,_T("Dest IP"), LVCFMT_LEFT, 110);
+	m_listRules.InsertColumn(order++,_T("Mask"), LVCFMT_LEFT, 110);
+	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 80);
 
 	UpdateData(false);
 
@@ -183,49 +186,78 @@ void CTesterDlg::OnBnClickedBRuleAdd()
 {
 	UpdateData();
 
-	DWORD result;
-
 	IPFilter pf;
 
+	if(m_protocolType == 0)
+  		pf.protocol = 0;
+	else if(m_protocolType == 1)
+  		pf.protocol = 6;
+	else
+		pf.protocol = 17;
+
 	char ascii[256];
-	wcstombs( ascii, m_myIP, 256 );
-
-  	pf.protocol = 0;									
-	pf.destinationIp = inet_addr("222.122.84.250");
+	wcstombs( ascii, m_destIP, 256 );
+	pf.destinationIp = inet_addr(ascii);
+	wcstombs( ascii, m_sourceIP, 256 );
 	pf.sourceIp = inet_addr(ascii);
-	pf.destinationMask = inet_addr("255.255.255.255");
-	pf.sourceMask = inet_addr("255.255.255.255");
-	pf.destinationPort = htons(0);
-	pf.sourcePort = htons(0);
+	wcstombs( ascii, m_destMask, 256 );
+	pf.destinationMask = inet_addr(ascii);
+	wcstombs( ascii, m_sourceMask, 256 );
+	pf.sourceMask = inet_addr(ascii);
+	wcstombs( ascii, m_destPort, 256 );
+	pf.destinationPort = htons(atoi(ascii));
+	wcstombs( ascii, m_sourcePort, 256 );
+	pf.sourcePort = htons(atoi(ascii));
 	pf.drop = TRUE;
-
-	result = AddFilter(pf);		//send the rule
-
+	if( AddFilter(pf) )	//send the rule
+	{
+		int index = m_listRules.GetItemCount();
+		int subIndex = 1;
+		if(m_protocolType == 0)
+			m_listRules.InsertItem(index, _T("All"));
+		else if(m_protocolType == 1)
+			m_listRules.InsertItem(index, _T("TCP"));
+		else
+			m_listRules.InsertItem(index, _T("UDP"));
+		m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourceIP, 0, 0, 0, 0, 0);
+		m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourceMask, 0, 0, 0, 0, 0);
+		m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourcePort, 0, 0, 0, 0, 0);
+		m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_destIP, 0, 0, 0, 0, 0);
+		m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_destMask, 0, 0, 0, 0, 0);
+		m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_destPort, 0, 0, 0, 0, 0);
+	}
 }
 
 BOOL CTesterDlg::AddFilter(IPFilter &pf)
 {
-	UpdateData();
-	//we send the rule to the driver
-	//DWORD result = helper.WriteIo(ADD_FILTER, &pf, sizeof(pf));
-	int index = m_listRules.GetItemCount();
-	int subIndex = 1;
-	m_listRules.InsertItem(index, m_sourceIP);
-	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourceMask, 0, 0, 0, 0, 0);
-	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourcePort, 0, 0, 0, 0, 0);
-	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_destIP, 0, 0, 0, 0, 0);
-	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_destMask, 0, 0, 0, 0, 0);
-	m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_destPort, 0, 0, 0, 0, 0);
+	DWORD result = helper.WriteIo(ADD_FILTER, &pf, sizeof(pf));
 
-	/*if (result != DRV_SUCCESS) 
+	if (result != DRV_SUCCESS) 
 		return FALSE;
-	else*/
+	else
 		return TRUE;
 }
+
+BOOL CTesterDlg::AddWord(WordFilter &wf)
+{
+	DWORD result = helper.WriteIo(ADD_WORD, &wf, sizeof(WordFilter));
+
+	if (result != DRV_SUCCESS) 
+		return FALSE;
+	else
+		return TRUE;
+}
+
 void CTesterDlg::OnBnClickedBwordAdd()
 {
 	UpdateData();
-	m_listWords.AddString(m_word);
+	WordFilter wf;
+	wf.id = m_listWords.GetCount();
+	char ascii[10];
+	wcstombs( ascii, m_word, 10 );
+	strcpy(wf.word, ascii);
+	if( AddWord(wf) )	//send the rule
+		m_listWords.AddString(m_word);
 	m_word = "";
 	UpdateData(false);
 }
