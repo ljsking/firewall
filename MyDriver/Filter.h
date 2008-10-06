@@ -9,23 +9,27 @@
 #define FILE_READ_ACCESS          ( 0x0001 )    // file & pipe
 #define FILE_WRITE_ACCESS         ( 0x0002 )    // file & pipe
 #define METHOD_BUFFERED                 0
+#define METHOD_OUT_DIRECT               2
 
 #define START_IP_HOOK CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX,METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define STOP_IP_HOOK CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+1, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define ADD_FILTER CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+2, METHOD_BUFFERED, FILE_WRITE_ACCESS)
+#define ADD_FILTER CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+2, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define CLEAR_FILTER CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+3, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define ADD_WORD CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+4, METHOD_BUFFERED, FILE_WRITE_ACCESS)
-#define SET_SETTING CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+5, METHOD_BUFFERED, FILE_WRITE_ACCESS)
-#define GET_SETTING CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+6, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define ADD_WORD CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+4, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define SET_SETTING CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+5, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define GET_SETTING CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+6, METHOD_BUFFERED, FILE_WRITE_ACCESS|FILE_READ_ACCESS)
 
 
 //struct to define filter rules
 typedef struct firewallSetting
 {
-	int IPFilter;			//if true, the packet will be drop, otherwise the packet pass
-	int WordFilter;			//if true, the packet will be drop, otherwise the packet pass
-	int PortMonitor;			//if true, the packet will be drop, otherwise the packet pass
-	int SessionMonitor;			//if true, the packet will be drop, otherwise the packet pass
+	ULONG IP;
+	int IPFilter;
+	int WordFilter;
+	int PortMonitor;
+	int SessionMonitor;
+	int MaxSession;
+	int NowSession;
 }FirewallSetting;
 
 //struct to define filter rules
@@ -42,9 +46,6 @@ typedef struct filter
 
 	USHORT sourcePort;		//source port
 	USHORT destinationPort; //destination port
-	
-	BOOLEAN drop;			//if true, the packet will be drop, otherwise the packet pass
-
 }IPFilter;
 
 typedef struct wordFilter

@@ -9,6 +9,8 @@
 #define IDC_BSTOP                       1001
 #define IDC_BRULE_ADD                   1002
 #define IDC_ERULE_DEST_IP               1003
+#define IDC_BSTART2                     1004
+#define IDC_BUPDATE                     1004
 #define IDC_MY_IP                       1005
 #define IDC_LIST_RULE                   1006
 #define IDC_BRULE_DELETE                1007
@@ -23,10 +25,9 @@
 #define IDC_BWORD_DELETE                1016
 #define IDC_COMBO1                      1017
 #define IDC_CHECK_RULE                  1018
-#define IDC_ERULE_SOURCE_IP2            1020
-#define IDC_ERULE_SOURCE_MASK2          1021
+#define IDC_EMAXSESSION                 1020
+#define IDC_ENOWSESSION                 1021
 #define IDC_CHECK_SESSION               1024
-#define IDC_CHECK3                      1025
 #define IDC_CHECK_WORD                  1025
 #define IDC_CHECK_MONITOR               1026
 

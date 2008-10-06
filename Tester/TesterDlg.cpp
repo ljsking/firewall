@@ -78,6 +78,8 @@ void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK_WORD, m_setting.WordFilter);
 	DDX_Check(pDX, IDC_CHECK_SESSION, m_setting.SessionMonitor);
 	DDX_Check(pDX, IDC_CHECK_MONITOR, m_setting.PortMonitor);
+	DDX_Text(pDX, IDC_EMAXSESSION, m_setting.MaxSession);
+	DDX_Text(pDX, IDC_ENOWSESSION, m_setting.NowSession);
 }
 
 BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
@@ -97,6 +99,7 @@ BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
 	ON_BN_CLICKED(IDC_CHECK_WORD, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_CHECK_SESSION, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_CHECK_MONITOR, &CTesterDlg::OnBnClickedCheck)
+	ON_BN_CLICKED(IDC_BUPDATE, &CTesterDlg::OnBnClickedBupdate)
 END_MESSAGE_MAP()
 
 
@@ -112,6 +115,9 @@ BOOL CTesterDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	m_myIP = GetLocalIP();
+	char ascii[256];
+	wcstombs( ascii, m_destIP, 256 );
+	m_setting.IP = inet_addr(ascii);
 
 	//we load the IPFilter Driver
 	filterDriver.LoadDriver(_T("IpFilterDriver"), _T("System32\\Drivers\\IpFltDrv.sys"), NULL, TRUE);
@@ -128,8 +134,9 @@ BOOL CTesterDlg::OnInitDialog()
 	m_listRules.InsertColumn(order++,_T("Mask"), LVCFMT_LEFT, 110);
 	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 80);
 
-	helper.WriteIo(GET_SETTING, &m_setting, sizeof(FirewallSetting));
-
+	helper.ReadIo(GET_SETTING, &m_setting, sizeof(FirewallSetting));
+	m_setting.MaxSession = 100;
+	m_setting.NowSession = 0;
 	UpdateData(false);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
@@ -218,7 +225,6 @@ void CTesterDlg::OnBnClickedBRuleAdd()
 	pf.destinationPort = htons(atoi(ascii));
 	wcstombs( ascii, m_sourcePort, 256 );
 	pf.sourcePort = htons(atoi(ascii));
-	pf.drop = TRUE;
 	if( AddFilter(pf) )	//send the rule
 	{
 		int index = m_listRules.GetItemCount();
@@ -314,5 +320,12 @@ void CTesterDlg::OnBnClickedCheck()
 {
 	UpdateData();
 	DWORD result = helper.WriteIo(SET_SETTING, &m_setting, sizeof(FirewallSetting));
+	UpdateData(false);
+}
+void CTesterDlg::OnBnClickedBupdate()
+{
+	int now = -1;
+	DWORD result = helper.ReadIo(GET_SETTING, &now, sizeof(int));
+	TRACE("m_setting now %d, %d\n", now, m_setting.MaxSession);
 	UpdateData(false);
 }

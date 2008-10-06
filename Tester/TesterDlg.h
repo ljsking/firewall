@@ -60,4 +60,6 @@ protected:
 	CButton m_bWordDelete;
 	int m_protocolType;
 	FirewallSetting m_setting;
+public:
+	afx_msg void OnBnClickedBupdate();
 };

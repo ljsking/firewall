@@ -22,6 +22,8 @@ struct filterList *lastFilter = NULL;
 struct wordList *firstWord = NULL;
 struct wordList *lastWord = NULL;
 unsigned int PacketLengthsum = 0;
+int NowSession = 0;
+int MaxSession = 100;
 FirewallSetting setting;
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
@@ -121,9 +123,8 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	switch (irpStack->MajorFunction)
 	{
 	case IRP_MJ_CREATE:
-
 		dprintf("DrvFltIp.SYS: IRP_MJ_CREATE\n");
-		SetFilterFunction(cbFilterFunction);
+		//SetFilterFunction(cbFilterFunction);
 		break;
 
 	case IRP_MJ_CLOSE:
@@ -180,20 +181,30 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			break;
 
 		case SET_SETTING:
-			dprintf("DrvFltIp.SYS: SET_SETTING %d %d\n", inputBufferLength, sizeof(WordFilter));
+			dprintf("DrvFltIp.SYS: SET_SETTING %d %d\n", inputBufferLength, sizeof(FirewallSetting));
 			if(inputBufferLength == sizeof(FirewallSetting))
 			{
+				fs = (FirewallSetting *)ioBuffer;
+				setting.IPFilter = fs->IPFilter;
+				setting.MaxSession = fs->MaxSession;
+				setting.IP = fs->IP;
+				setting.PortMonitor = fs->PortMonitor;
+				setting.SessionMonitor = fs->SessionMonitor;
+				setting.WordFilter = fs->WordFilter;
+				fs->MaxSession = 10;
 				dprintf("DrvFltIp.SYS: SET_SETTING\n");
-				memcpy(&setting, ioBuffer, sizeof(FirewallSetting));
+				//memcpy(&setting, ioBuffer, sizeof(FirewallSetting));
 			}
 			break;
 
 		case GET_SETTING:
-			dprintf("DrvFltIp.SYS: GET_SETTING %d %d\n", inputBufferLength, sizeof(WordFilter));
-			if(inputBufferLength == sizeof(FirewallSetting))
+			dprintf("DrvFltIp.SYS: GET_SETTING %d %d\n", outputBufferLength, sizeof(int));
+			if(outputBufferLength == sizeof(int))
 			{
-				dprintf("DrvFltIp.SYS: GET_SETTING\n");
-				memcpy(ioBuffer, &setting, sizeof(FirewallSetting));
+				dprintf("DrvFltIp.SYS: before GET_SETTING %d\n",*((int *)ioBuffer));
+				RtlCopyMemory(ioBuffer, &NowSession, sizeof(int));
+				Irp->IoStatus.Information = sizeof(int);
+				dprintf("DrvFltIp.SYS: GET_SETTING %d\n",*((int *)ioBuffer));
 			}
 			break;
 
@@ -302,9 +313,6 @@ NTSTATUS AddFilterToList(IPFilter *pf)
 
 	aux->ipf.protocol = pf->protocol;
 
-	aux->ipf.drop=pf->drop;
-
-	
 	//Add the new filter to the filter list
 	if(firstFilter == NULL)
 	{
@@ -556,15 +564,8 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
 				{ 
 					if(aux->ipf.destinationPort == 0 || tcph->destinationPort == aux->ipf.destinationPort) //puerto tcp destino
 					{
-
-                      	//now we decided what to do with the packet
-						if(aux->ipf.drop)
-                        {
-                            dprintf("TCP Packet Drop\n");
-                            return  PF_DROP;
-                        }
-						else
-							return PF_FORWARD;
+                        dprintf("TCP Packet Drop\n");
+                        return  PF_DROP;
 					}
 				}
 			}
@@ -579,15 +580,8 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
 				{ 
 					if(aux->ipf.destinationPort == 0 || udph->destinationPort == aux->ipf.destinationPort) 
 					{
-                      	//now we decided what to do with the packet
-						if(aux->ipf.drop)
-					    {
-                            dprintf("UDP Packet Drop\n");
-                            return  PF_DROP;
-                        }	
-						
-						else
-							return PF_FORWARD;
+                        dprintf("UDP Packet Drop\n");
+                        return  PF_DROP;
 					}
 				}
 			}	
@@ -596,6 +590,44 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
 		//compare with the next rule
 		countRule++;
 		aux=aux->next;
+	}
+	return PF_FORWARD;
+}
+
+/*++
+
+Routine Description:
+
+    Session control
+--*/
+PF_FORWARD_ACTION FilterBySession(IPPacket *ipp, unsigned char *Packet)
+{
+	if(!setting.SessionMonitor)
+		return PF_FORWARD;
+	if( setting.SessionMonitor && ipp->ipProtocol == 6)
+	{
+		TCPHeader *tcph=(TCPHeader *)Packet; 
+
+
+		//if we havent the bit SYN activate, we pass the packets
+		if((tcph->flags == 0x02)) 
+		{
+			NowSession++;
+			dprintf("SYN FLAGS %d %d\n", NowSession, MaxSession);
+			if(NowSession>MaxSession)
+			{
+				NowSession = setting.MaxSession;
+				return PF_DROP;
+			}
+		}
+		else if((tcph->flags == 17) && (ipp->ipSource) == setting.IP)
+		{
+			NowSession--;
+			dprintf("FIN FLAGS %d %d %d\n", NowSession, tcph->flags, MaxSession);
+			if(NowSession<0)
+				NowSession = 0;
+		}
+
 	}
 	return PF_FORWARD;
 }
@@ -616,38 +648,26 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 
 	//we "extract" the ip Header 
 	ipp=(IPPacket *)PacketHeader;
-
-	dprintf("Tama?: %x, %d", PacketLength, RecvInterfaceIndex);
-	dprintf("Source: %x\nDestination: %x\nProtocol: %d", ipp->ipSource, ipp->ipDestination, ipp->ipProtocol);
-
-	dprintf("PacketLength: %d", PacketLength);
 	PacketLengthsum +=PacketLength;
-	dprintf("PacketLength ÃÑ ÇÕ: %d", PacketLengthsum);
+	if(setting.PortMonitor){
+		dprintf("Tama?: %x, %d", PacketLength, RecvInterfaceIndex);
+		dprintf("Source: %x\nDestination: %x\nProtocol: %d", ipp->ipSource, ipp->ipDestination, ipp->ipProtocol);
 
-	/*if( aux->ipf.Is_SYN ==1 && ipp->ipProtocol == 6)
-	{
-		tcph=(TCPHeader *)Packet; 
-
-		dprintf("FLAGS: %x\n", tcph->flags);
-		dprintf("IS_SYN : %d\n",aux->ipf.Is_SYN);
-
-		//if we havent the bit SYN activate, we pass the packets
-		if((tcph->flags == 0x02) && (ipp->ipSource) != aux->ipf.sourceIp) 
-		{
-			dprintf("SYN Packet DROP");
-			return PF_DROP;
-		}
-
-	}*/
-	rz = FilterByWords(ipp, Packet);
-
-	if(PF_FORWARD==rz)
-		rz = FilterByRules(ipp, Packet);
+		dprintf("PacketLength: %d", PacketLength);
+		dprintf("PacketLength ÃÑ ÇÕ: %d", PacketLengthsum);
+	}
+	rz = FilterBySession(ipp, Packet);
 	if(rz == PF_FORWARD)
-		dprintf("Forward");
-	else
-		dprintf("Drop");
-
+		rz = FilterByWords(ipp, Packet);
+	if(rz == PF_FORWARD)
+		rz = FilterByRules(ipp, Packet);
+	if(setting.PortMonitor)
+	{
+		if(rz == PF_FORWARD)
+			dprintf("Forward");
+		else
+			dprintf("Drop");
+	}
 	return rz;
 }
 
