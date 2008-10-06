@@ -18,7 +18,7 @@
 #define ADD_WORD CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+4, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define SET_SETTING CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+5, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define GET_SETTING CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+6, METHOD_BUFFERED, FILE_WRITE_ACCESS|FILE_READ_ACCESS)
-
+#define GET_PORTUSAGE CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+7, METHOD_BUFFERED, FILE_WRITE_ACCESS|FILE_READ_ACCESS)
 
 //struct to define filter rules
 typedef struct firewallSetting
@@ -69,6 +69,18 @@ typedef struct wordList
 	WordFilter wordf;
 	struct wordList *next;
 }WordList;
+
+typedef struct portUsage
+{
+	USHORT	port;
+	ULONG	usage;
+}PortUsage;
+
+typedef struct portList
+{
+	PortUsage pusage;
+	struct portList *next;
+}PortList;
 
 //Ip Header
 typedef struct IPHeader 

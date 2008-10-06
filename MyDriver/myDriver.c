@@ -14,13 +14,17 @@ NTSTATUS SetFilterFunction(PacketFilterExtensionPtr filterFunction);
 PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned char *Packet, IN unsigned int PacketLength, IN unsigned int RecvInterfaceIndex, IN unsigned int SendInterfaceIndex, IN unsigned long RecvLinkNextHop, IN unsigned long SendLinkNextHop);
 NTSTATUS AddFilterToList(IPFilter *pf);
 NTSTATUS AddWordToList(WordFilter *wf);
+PortList *FindPort(USHORT port);
 void ClearFilterList(void);
 void ClearWordList(void);
+void ClearPortList(void);
 
 struct filterList *firstFilter = NULL;
 struct filterList *lastFilter = NULL;
 struct wordList *firstWord = NULL;
 struct wordList *lastWord = NULL;
+struct portList *firstPort = NULL;
+struct portList *lastPort = NULL;
 unsigned int PacketLengthsum = 0;
 int NowSession = 0;
 int MaxSession = 100;
@@ -106,6 +110,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	IPFilter			*nf;
 	WordFilter			*wf;
 	FirewallSetting 	*fs;
+	PortList			*pl;
 
 	Irp->IoStatus.Status      = STATUS_SUCCESS;
 	Irp->IoStatus.Information = 0;
@@ -131,6 +136,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		SetFilterFunction(NULL);
 		ClearFilterList();
 		ClearWordList();
+		ClearPortList();
 		dprintf("DrvFltIp.SYS: IRP_MJ_CLOSE\n");
 		break;
 
@@ -208,6 +214,22 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			}
 			break;
 
+		case GET_PORTUSAGE:
+			dprintf("DrvFltIp.SYS: GET_PORTUSAGE %d %d %d %d\n", inputBufferLength, sizeof(USHORT), outputBufferLength, sizeof(PortUsage));
+			if(outputBufferLength == sizeof(int) && inputBufferLength == sizeof(USHORT))
+			{
+				dprintf("DrvFltIp.SYS: GET_PORTUSAGE input: %u\n",*((USHORT *)ioBuffer));
+				pl = FindPort(*((USHORT *)ioBuffer));
+				if(pl!=NULL)
+				{
+					RtlCopyMemory(ioBuffer, &(pl->pusage), sizeof(PortUsage));
+					Irp->IoStatus.Information = sizeof(PortUsage);
+					dprintf("DrvFltIp.SYS: GET_PORTUSAGE usage\n",pl->pusage.usage);
+				}
+				
+			}
+			break;
+
 		default:
 			Irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
 			dprintf("DrvFltIp.SYS: unknown IRP_MJ_DEVICE_CONTROL\n");
@@ -261,7 +283,8 @@ VOID DrvUnload(IN PDRIVER_OBJECT DriverObject)
 	// Free any resources
 	ClearFilterList();
 	ClearWordList();
-   
+	ClearPortList();
+
     // Delete the symbolic link
     RtlInitUnicodeString(&deviceLinkUnicodeString, DOS_DEVICE_NAME);
     IoDeleteSymbolicLink(&deviceLinkUnicodeString);
@@ -736,6 +759,119 @@ void ClearWordList(void)
 	}
 
 	firstWord = lastWord = NULL;
+
+	dprintf("Removed is complete.");
+}
+
+/*++
+
+Routine Description:
+
+    Find PortList element by port number
+
+Arguments:
+	Portnumber which we want to find
+
+Return Value:
+	Return pointer to PortList if it found, return NULL else.
+ 
+--*/
+
+PortList *FindPort(USHORT port)
+{
+	struct portList *aux = firstPort;
+
+	//free the linked list
+	dprintf("Removing the port List...");
+	
+	while(aux != NULL)
+	{
+		if(aux->pusage.port == port)
+			break;
+		aux = aux->next;
+	}
+	return aux;
+}
+
+/*++
+
+Routine Description:
+
+    Update packet usage to exact port. If the port is not existed in port list, new port element is created.
+
+Arguments:
+	Portnumber and usage
+
+Return Value:
+ 
+--*/
+
+
+NTSTATUS UpdatePortUsage(USHORT port, ULONG usage)
+{
+	struct portList *aux = FindPort(port);
+	if(aux == NULL)
+	{
+		aux=(struct wordList *) ExAllocatePool(NonPagedPool, sizeof(struct portList));
+
+		if(aux == NULL)
+		{
+			dprintf("Problem reserving memory\n");
+			return STATUS_INSUFFICIENT_RESOURCES;
+		}
+
+		aux->pusage.usage = 0;
+		aux->pusage.port = port;
+
+		
+		//Add the new filter to the filter list
+		if(firstPort == NULL)
+		{
+			firstPort = lastPort = aux;
+			firstPort->next = NULL;
+		}
+		else
+		{
+			lastPort->next = aux;
+			lastPort = aux;
+			lastPort->next = NULL;
+		}
+
+		dprintf("Port Added\t%d\n", aux->pusage.port);
+	}
+	aux->pusage.usage += usage;
+}
+
+/*++
+
+Routine Description:
+
+    Remove the linked list where the ports were saved.
+
+Arguments:
+
+
+Return Value:
+
+ 
+--*/
+void ClearPortList(void)
+{
+	struct portList *aux = NULL;
+
+	//free the linked list
+	dprintf("Removing the port List...");
+	
+	while(firstPort != NULL)
+	{
+		aux = firstPort;
+		firstPort = firstPort->next;
+		ExFreePool(aux);
+
+		dprintf("One port removed");
+	}
+
+	firstPort = lastPort = NULL;
 
 	dprintf("Removed is complete.");
 }
