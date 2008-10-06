@@ -6,6 +6,7 @@
     ((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method) \
 )
 #define FILE_ANY_ACCESS                 0
+#define FILE_READ_ACCESS          ( 0x0001 )    // file & pipe
 #define FILE_WRITE_ACCESS         ( 0x0002 )    // file & pipe
 #define METHOD_BUFFERED                 0
 
@@ -14,16 +15,17 @@
 #define ADD_FILTER CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+2, METHOD_BUFFERED, FILE_WRITE_ACCESS)
 #define CLEAR_FILTER CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+3, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define ADD_WORD CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+4, METHOD_BUFFERED, FILE_WRITE_ACCESS)
+#define SET_SETTING CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+5, METHOD_BUFFERED, FILE_WRITE_ACCESS)
+#define GET_SETTING CTL_CODE(FILE_DEVICE_DRVFLTIP, DRVFLTIP_IOCTL_INDEX+6, METHOD_BUFFERED, FILE_READ_ACCESS)
 
 
 //struct to define filter rules
 typedef struct firewallSetting
 {
-	BOOLEAN IPFilter;			//if true, the packet will be drop, otherwise the packet pass
-	BOOLEAN WordFilter;			//if true, the packet will be drop, otherwise the packet pass
-	BOOLEAN PortMonitor;			//if true, the packet will be drop, otherwise the packet pass
-	BOOLEAN SessionMonitor;			//if true, the packet will be drop, otherwise the packet pass
-
+	int IPFilter;			//if true, the packet will be drop, otherwise the packet pass
+	int WordFilter;			//if true, the packet will be drop, otherwise the packet pass
+	int PortMonitor;			//if true, the packet will be drop, otherwise the packet pass
+	int SessionMonitor;			//if true, the packet will be drop, otherwise the packet pass
 }FirewallSetting;
 
 //struct to define filter rules

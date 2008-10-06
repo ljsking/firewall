@@ -22,6 +22,7 @@ struct filterList *lastFilter = NULL;
 struct wordList *firstWord = NULL;
 struct wordList *lastWord = NULL;
 unsigned int PacketLengthsum = 0;
+FirewallSetting setting;
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 {
@@ -102,6 +103,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	NTSTATUS            ntStatus;
 	IPFilter			*nf;
 	WordFilter			*wf;
+	FirewallSetting 	*fs;
 
 	Irp->IoStatus.Status      = STATUS_SUCCESS;
 	Irp->IoStatus.Information = 0;
@@ -125,7 +127,9 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		break;
 
 	case IRP_MJ_CLOSE:
-
+		SetFilterFunction(NULL);
+		ClearFilterList();
+		ClearWordList();
 		dprintf("DrvFltIp.SYS: IRP_MJ_CLOSE\n");
 		break;
 
@@ -173,6 +177,24 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		case CLEAR_FILTER:
 			ClearFilterList();
 			dprintf("DrvFltIp.SYS: CLEAR_FILTER\n");
+			break;
+
+		case SET_SETTING:
+			dprintf("DrvFltIp.SYS: SET_SETTING %d %d\n", inputBufferLength, sizeof(WordFilter));
+			if(inputBufferLength == sizeof(FirewallSetting))
+			{
+				dprintf("DrvFltIp.SYS: SET_SETTING\n");
+				memcpy(&setting, ioBuffer, sizeof(FirewallSetting));
+			}
+			break;
+
+		case GET_SETTING:
+			dprintf("DrvFltIp.SYS: GET_SETTING %d %d\n", inputBufferLength, sizeof(WordFilter));
+			if(inputBufferLength == sizeof(FirewallSetting))
+			{
+				dprintf("DrvFltIp.SYS: GET_SETTING\n");
+				memcpy(ioBuffer, &setting, sizeof(FirewallSetting));
+			}
 			break;
 
 		default:
@@ -467,6 +489,8 @@ Routine Description:
 PF_FORWARD_ACTION FilterByWords(IPPacket *ipp, unsigned char *Packet)
 {
 	struct wordList *aux = firstWord;
+	if(!setting.WordFilter)
+		return PF_FORWARD;
 	if(ipp->ipProtocol != 17)
 		return PF_FORWARD;
 	while(aux != NULL)
@@ -494,6 +518,8 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
 	UDPHeader *udph;
 	int countRule=0;
 	struct filterList *aux = firstFilter;
+	if(!setting.IPFilter)
+		return PF_FORWARD;
 	while(aux != NULL)
 	{
 		dprintf("Comparing with Rule %d", countRule);
@@ -586,6 +612,7 @@ Routine Description:
 PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned char *Packet, IN unsigned int PacketLength, IN unsigned int RecvInterfaceIndex, IN unsigned int SendInterfaceIndex, IN unsigned long RecvLinkNextHop, IN unsigned long SendLinkNextHop)
 {
 	IPPacket *ipp;
+	PF_FORWARD_ACTION rz;
 
 	//we "extract" the ip Header 
 	ipp=(IPPacket *)PacketHeader;
@@ -596,10 +623,32 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 	dprintf("PacketLength: %d", PacketLength);
 	PacketLengthsum +=PacketLength;
 	dprintf("PacketLength ÃÑ ÇÕ: %d", PacketLengthsum);
-	if(PF_FORWARD==FilterByWords(ipp, Packet))
-		return FilterByRules(ipp, Packet);
+
+	/*if( aux->ipf.Is_SYN ==1 && ipp->ipProtocol == 6)
+	{
+		tcph=(TCPHeader *)Packet; 
+
+		dprintf("FLAGS: %x\n", tcph->flags);
+		dprintf("IS_SYN : %d\n",aux->ipf.Is_SYN);
+
+		//if we havent the bit SYN activate, we pass the packets
+		if((tcph->flags == 0x02) && (ipp->ipSource) != aux->ipf.sourceIp) 
+		{
+			dprintf("SYN Packet DROP");
+			return PF_DROP;
+		}
+
+	}*/
+	rz = FilterByWords(ipp, Packet);
+
+	if(PF_FORWARD==rz)
+		rz = FilterByRules(ipp, Packet);
+	if(rz == PF_FORWARD)
+		dprintf("Forward");
 	else
-		return PF_DROP;
+		dprintf("Drop");
+
+	return rz;
 }
 
 

@@ -74,6 +74,10 @@ void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BWORD_ADD, m_bWordAdd);
 	DDX_Control(pDX, IDC_BWORD_DELETE, m_bWordDelete);
 	DDX_CBIndex(pDX, IDC_COMBO1, m_protocolType);
+	DDX_Check(pDX, IDC_CHECK_RULE, m_setting.IPFilter);
+	DDX_Check(pDX, IDC_CHECK_WORD, m_setting.WordFilter);
+	DDX_Check(pDX, IDC_CHECK_SESSION, m_setting.SessionMonitor);
+	DDX_Check(pDX, IDC_CHECK_MONITOR, m_setting.PortMonitor);
 }
 
 BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
@@ -89,6 +93,10 @@ BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
 	ON_BN_CLICKED(IDC_BWORD_DELETE, &CTesterDlg::OnBnClickedBwordDelete)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_RULE, &CTesterDlg::OnLvnItemchangedListRule)
 	ON_BN_CLICKED(IDC_BRULE_DELETE, &CTesterDlg::OnBnClickedBruleDelete)
+	ON_BN_CLICKED(IDC_CHECK_RULE, &CTesterDlg::OnBnClickedCheck)
+	ON_BN_CLICKED(IDC_CHECK_WORD, &CTesterDlg::OnBnClickedCheck)
+	ON_BN_CLICKED(IDC_CHECK_SESSION, &CTesterDlg::OnBnClickedCheck)
+	ON_BN_CLICKED(IDC_CHECK_MONITOR, &CTesterDlg::OnBnClickedCheck)
 END_MESSAGE_MAP()
 
 
@@ -109,7 +117,7 @@ BOOL CTesterDlg::OnInitDialog()
 	filterDriver.LoadDriver(_T("IpFilterDriver"), _T("System32\\Drivers\\IpFltDrv.sys"), NULL, TRUE);
 	//we don't deregister the driver at destructor
 	filterDriver.SetRemovable(FALSE);
-	DWORD ret = helper.LoadDriver(_T("MyDriver"), NULL, NULL, TRUE);
+	helper.LoadDriver(_T("MyDriver"), NULL, NULL, TRUE);
 
 	int order = 0;
 	m_listRules.InsertColumn(order++,_T("Protocol"), LVCFMT_LEFT, 90);
@@ -119,6 +127,8 @@ BOOL CTesterDlg::OnInitDialog()
 	m_listRules.InsertColumn(order++,_T("Dest IP"), LVCFMT_LEFT, 110);
 	m_listRules.InsertColumn(order++,_T("Mask"), LVCFMT_LEFT, 110);
 	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 80);
+
+	helper.WriteIo(GET_SETTING, &m_setting, sizeof(FirewallSetting));
 
 	UpdateData(false);
 
@@ -277,7 +287,6 @@ void CTesterDlg::OnBnClickedBwordDelete()
 	int sel = m_listWords.GetCurSel();
 	CString selected;
 	m_listWords.GetText(sel, selected);
-	TRACE("%d %s\n", sel, selected);
 	m_listWords.DeleteString(sel);
 	m_bWordDelete.EnableWindow(0);
 }
@@ -299,4 +308,11 @@ void CTesterDlg::OnBnClickedBruleDelete()
 		m_bRuleDelete.EnableWindow(0);
 	}
 
+}
+
+void CTesterDlg::OnBnClickedCheck()
+{
+	UpdateData();
+	DWORD result = helper.WriteIo(SET_SETTING, &m_setting, sizeof(FirewallSetting));
+	UpdateData(false);
 }

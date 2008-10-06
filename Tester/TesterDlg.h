@@ -40,6 +40,7 @@ protected:
 	afx_msg void OnBnClickedBwordDelete();
 	afx_msg void OnLvnItemchangedListRule(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBruleDelete();
+	afx_msg void OnBnClickedCheck();
 	
 	CString m_myIP;
 	CButton m_bStart;
@@ -58,4 +59,5 @@ protected:
 	CButton m_bWordAdd;
 	CButton m_bWordDelete;
 	int m_protocolType;
+	FirewallSetting m_setting;
 };
