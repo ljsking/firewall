@@ -10,10 +10,15 @@ public:
 	bool operator==(const Port &other)const;
 	bool operator<(const Port &other)const;
 	const int GetPort()const;
+	const int GetUsage()const;
+	void SetUsage(const int Usage);
+	const int GetState()const;
+	void SetState(const int State);
+
 private:
 	int port;
-	int *usage;
-	int *state;
+	int usage;
+	int state;
 };
 
 typedef std::vector<Port> Ports;

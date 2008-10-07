@@ -215,16 +215,16 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			break;
 
 		case GET_PORTUSAGE:
-			dprintf("DrvFltIp.SYS: GET_PORTUSAGE %d %d %d %d\n", inputBufferLength, sizeof(USHORT), outputBufferLength, sizeof(PortUsage));
+			dprintf("DrvFltIp.SYS: GET_PORTUSAGE %d %d %d %d\n", inputBufferLength, sizeof(USHORT), outputBufferLength, sizeof(ULONG));
 			if(outputBufferLength == sizeof(int) && inputBufferLength == sizeof(USHORT))
 			{
 				dprintf("DrvFltIp.SYS: GET_PORTUSAGE input: %u\n",*((USHORT *)ioBuffer));
 				pl = FindPort(*((USHORT *)ioBuffer));
 				if(pl!=NULL)
 				{
-					RtlCopyMemory(ioBuffer, &(pl->pusage), sizeof(PortUsage));
-					Irp->IoStatus.Information = sizeof(PortUsage);
-					dprintf("DrvFltIp.SYS: GET_PORTUSAGE usage\n",pl->pusage.usage);
+					RtlCopyMemory(ioBuffer, &(pl->pusage.usage), sizeof(ULONG));
+					Irp->IoStatus.Information = sizeof(ULONG);
+					dprintf("DrvFltIp.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
 				}
 				
 			}
@@ -514,7 +514,38 @@ NTSTATUS SetFilterFunction(PacketFilterExtensionPtr filterFunction)
 
 Routine Description:
 
-    Filter the packet by word rules
+    Monitor ports. Accumulate a usage of each port.
+--*/
+
+int PortMonitoring(IPPacket *ipp, unsigned char *Packet, unsigned int PacketLength)
+{
+	TCPHeader *tcph;
+	USHORT port;
+	PortList *aux;
+	if(!setting.PortMonitor||ipp->ipProtocol != 6)
+		return 0;
+	tcph=(TCPHeader *)Packet; 
+	port = tcph->sourcePort;
+
+	aux = firstPort;
+	while(aux != NULL)
+	{
+		if(aux->pusage.port == port)
+		{
+			aux->pusage.usage+=PacketLength;
+			dprintf("Found it %d %d\n", port, aux->pusage.usage);
+			break;
+		}
+		aux = aux->next;
+	}
+	return 0;
+}
+
+/*++
+
+Routine Description:
+
+    Filter the udp packet by word rules
 --*/
 
 PF_FORWARD_ACTION FilterByWords(IPPacket *ipp, unsigned char *Packet)
@@ -679,6 +710,7 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 		dprintf("PacketLength: %d", PacketLength);
 		dprintf("PacketLength ÃÑ ÇÕ: %d", PacketLengthsum);
 	}
+	PortMonitoring(ipp, Packet, PacketLength);
 	rz = FilterBySession(ipp, Packet);
 	if(rz == PF_FORWARD)
 		rz = FilterByWords(ipp, Packet);
@@ -767,13 +799,13 @@ void ClearWordList(void)
 
 Routine Description:
 
-    Find PortList element by port number
+    Find PortList element by port number or make new element if no there.
 
 Arguments:
 	Portnumber which we want to find
 
 Return Value:
-	Return pointer to PortList if it found, return NULL else.
+	Return pointer to PortList
  
 --*/
 
@@ -782,34 +814,17 @@ PortList *FindPort(USHORT port)
 	struct portList *aux = firstPort;
 
 	//free the linked list
-	dprintf("Removing the port List...");
+	dprintf("Finding the port List...");
 	
 	while(aux != NULL)
 	{
 		if(aux->pusage.port == port)
+		{
+			dprintf("Found it");
 			break;
+		}
 		aux = aux->next;
 	}
-	return aux;
-}
-
-/*++
-
-Routine Description:
-
-    Update packet usage to exact port. If the port is not existed in port list, new port element is created.
-
-Arguments:
-	Portnumber and usage
-
-Return Value:
- 
---*/
-
-
-NTSTATUS UpdatePortUsage(USHORT port, ULONG usage)
-{
-	struct portList *aux = FindPort(port);
 	if(aux == NULL)
 	{
 		aux=(struct wordList *) ExAllocatePool(NonPagedPool, sizeof(struct portList));
@@ -839,7 +854,7 @@ NTSTATUS UpdatePortUsage(USHORT port, ULONG usage)
 
 		dprintf("Port Added\t%d\n", aux->pusage.port);
 	}
-	aux->pusage.usage += usage;
+	return aux;
 }
 
 /*++

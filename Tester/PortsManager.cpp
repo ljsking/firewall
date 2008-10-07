@@ -7,6 +7,8 @@
 
 #include "port.h"
 #include "filterhelper.h"
+#include "filterhelper.h"
+#include "..\\myDriver\\Filter.h"
 #include "portsmanager.h"
 
 PortsManager::PortsManager()
@@ -25,7 +27,6 @@ PortSet PortsManager::GetNowPorts()
 	PMIB_TCPTABLE pTcpTable;
 	DWORD dwSize = 0;
 	DWORD dwRetVal = 0;
-	char *addr_ptr;
 	unsigned short *port_ptr;
 	DWORD i;
 
@@ -43,13 +44,6 @@ PortSet PortsManager::GetNowPorts()
 				//addr_ptr = (char *)&pTcpTable->table[i].dwRemoteAddr;
 				//port_ptr = (unsigned short *)&pTcpTable->table[i].dwRemotePort;
 				DWORD state = pTcpTable->table[i].dwState;
-				TCHAR buf[100];
-				wsprintf(buf, _T("%ld"), *port_ptr);
-				m_list->InsertItem(1, buf);
-				wsprintf(buf, _T("%ld"), 0);
-				m_list->SetItem(1, 1, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
-				wsprintf(buf, _T("%ld"), state);
-				m_list->SetItem(1, 2, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
 				newPorts.insert(Port(*port_ptr, state));
 			}
 		}
@@ -60,9 +54,7 @@ PortSet PortsManager::GetNowPorts()
 
 void PortsManager::Update()
 {
-	
 	PortSet newPorts = GetNowPorts();
-
 	Ports tmp(ports.size()+newPorts.size());
 	PortsIterator end=std::set_difference (ports.begin(), ports.end(), newPorts.begin(), newPorts.end(), tmp.begin());
 	TRACE("diff ports %d, %d\n", ports.size(), newPorts.size());
@@ -71,4 +63,24 @@ void PortsManager::Update()
 		TRACE("%d\n",it->GetPort());
 	}
 	ports = newPorts;
+	for(PortSet::iterator iter = ports.begin(); iter!=ports.end(); iter++){
+		UpdatePort(iter);
+		TCHAR buf[100];
+		wsprintf(buf, _T("%ld"), iter->GetPort());
+		m_list->InsertItem(1, buf);
+		wsprintf(buf, _T("%ld"), iter->GetUsage());
+		m_list->SetItem(1, 1, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
+		wsprintf(buf, _T("%ld"), iter->GetState());
+		m_list->SetItem(1, 2, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
+	}
+}
+
+bool PortsManager::UpdatePort(PortSet::iterator &iter)
+{
+	//m_helper.RawIo(DWORD code, PVOID inBuffer, DWORD inCount, PVOID outBuffer, DWORD outCount);
+	ULONG usage;
+	USHORT port = iter->GetPort();
+	m_helper->RawIo(GET_PORTUSAGE, &port, sizeof(port), &usage, sizeof(usage));
+	iter->SetUsage(usage);
+	return true;
 }
