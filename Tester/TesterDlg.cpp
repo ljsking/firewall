@@ -12,8 +12,9 @@
 #include "..\\myDriver\\Filter.h"
 #include "Tester.h"
 #include "Port.h"
-#include "PortsManager.h"
 #include "Chart\\ChartCtrl.h"
+#include "usagetrace.h"
+#include "PortsManager.h"
 #include "TesterDlg.h"
 
 #ifdef _DEBUG
@@ -88,7 +89,7 @@ void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EMAXSESSION, m_setting.MaxSession);
 	DDX_Text(pDX, IDC_ENOWSESSION, m_setting.NowSession);
 	DDX_Control(pDX, IDC_LIST_PORT, m_listPorts);
-	DDX_Control(pDX, IDC_CHART, m_ChartCtrl);
+	DDX_Control(pDX, IDC_CHART, m_chartCtrl);
 }
 
 BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
@@ -109,8 +110,8 @@ BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
 	ON_BN_CLICKED(IDC_CHECK_SESSION, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_CHECK_MONITOR, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_BUPDATE, &CTesterDlg::OnBnClickedBupdate)
-	ON_NOTIFY(HDN_ITEMCHANGED, 0, &CTesterDlg::OnHdnItemchangedListPort)
 	ON_WM_TIMER()
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_PORT, &CTesterDlg::OnLvnItemchangedListPort)
 END_MESSAGE_MAP()
 
 
@@ -146,14 +147,14 @@ BOOL CTesterDlg::OnInitDialog()
 	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 80);
 
 	order = 0;
-	m_listPorts.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 80);
-	m_listPorts.InsertColumn(order++,_T("Usage"), LVCFMT_LEFT, 100);
-	m_listPorts.InsertColumn(order++,_T("State"), LVCFMT_LEFT, 100);
+	m_listPorts.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 70);
+	m_listPorts.InsertColumn(order++,_T("Usage"), LVCFMT_LEFT, 90);
+	m_listPorts.InsertColumn(order++,_T("State"), LVCFMT_LEFT, 90);
 
 	helper.ReadIo(GET_SETTING, &m_setting, sizeof(FirewallSetting));
 	m_setting.MaxSession = 100;
 	m_setting.NowSession = 0;
-	m_portsManager.Init(&helper, &m_listPorts);
+	m_portsManager.Init(&helper, &m_listPorts, &m_chartCtrl);
 
 	UpdateData(false);
 
@@ -350,15 +351,8 @@ void CTesterDlg::OnBnClickedBupdate()
 	
 }
 
-void CTesterDlg::OnHdnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
-	*pResult = 0;
-}
-
 void CTesterDlg::UpdatePorts()
 {
-	//m_listPorts.DeleteAllItems();
 	m_portsManager.Update();
 }
 void CTesterDlg::OnTimer(UINT_PTR nIDEvent)
@@ -371,4 +365,11 @@ void CTesterDlg::OnTimer(UINT_PTR nIDEvent)
 		UpdateData(false);
     }
 	CDialog::OnTimer(nIDEvent);
+}
+
+void CTesterDlg::OnLvnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	m_portsManager.ChangeSelected(pNMLV->iItem);
+	*pResult = 0;
 }

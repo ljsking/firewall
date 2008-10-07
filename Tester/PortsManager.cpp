@@ -9,15 +9,20 @@
 #include "filterhelper.h"
 #include "filterhelper.h"
 #include "..\\myDriver\\Filter.h"
+#include "Chart\\ChartCtrl.h"
+#include "Chart\\ChartLineSerie.h"
+#include "usagetrace.h"
 #include "portsmanager.h"
 
 PortsManager::PortsManager()
 {
 }
-void PortsManager::Init(FilterHelper *helper, CListCtrl *list)
+void PortsManager::Init(FilterHelper *helper, CListCtrl *list, CChartCtrl *chart)
 {
 	m_helper = helper;
 	m_list = list;
+	m_chart = chart;
+	m_selectedPort = 0;
 }
 
 PortSet PortsManager::GetNowPorts()
@@ -55,47 +60,30 @@ PortSet PortsManager::GetNowPorts()
 void PortsManager::Update()
 {
 	PortSet newPorts = GetNowPorts();
-	Ports tmp(ports.size()+newPorts.size());
-	PortsIterator end=std::set_difference (ports.begin(), ports.end(), newPorts.begin(), newPorts.end(), tmp.begin());
+	Ports tmp(m_ports.size()+newPorts.size());
+	PortsIterator end=std::set_difference (m_ports.begin(), m_ports.end(), newPorts.begin(), newPorts.end(), tmp.begin());
 	for(PortsIterator it = tmp.begin();it!=end;it++)
 	{
 		USHORT port = it->GetPort();
 		m_helper->WriteIo(DEL_PORT, &port, sizeof(port));
+		m_traces.erase(m_traces.find(UsageTrace(port)));
 	}
-	end=std::set_difference (newPorts.begin(), newPorts.end(), ports.begin(), ports.end(), tmp.begin());
-	ports = newPorts;
-	for(PortSet::iterator iter = ports.begin(); iter!=ports.end(); iter++){
+	end=std::set_difference (newPorts.begin(), newPorts.end(), m_ports.begin(), m_ports.end(), tmp.begin());
+	m_ports = newPorts;
+	for(PortSet::iterator iter = m_ports.begin(); iter!=m_ports.end(); iter++){
 		UpdatePort(iter);
 	}
 	for(int i = 0; i<m_list->GetItemCount(); i++)
 	{
 		TCHAR szBuffer[1024];
-		char ascii[1024];
-		DWORD cchBuf(1024);
-		LVITEM lvi;
-		lvi.iItem = i;
-		lvi.iSubItem = 0;
-		lvi.mask = LVIF_TEXT;
-		lvi.pszText = szBuffer;
-		lvi.cchTextMax = cchBuf;
-		m_list->GetItem(&lvi);
-		wcstombs(ascii, szBuffer, 1024);
-		int port = atoi(ascii);
-		PortSet::iterator iter = ports.find(Port(port, 0));
-		if(iter!=ports.end())
+		int port = GetPortFromList(i);
+		PortSet::iterator iter = m_ports.find(Port(port, 0));
+		if(iter!=m_ports.end())
 		{
 			wsprintf(szBuffer, _T("%ld"), iter->GetUsage());
-			lvi.iItem = i;
-			lvi.iSubItem = 1;
-			lvi.mask = LVIF_TEXT;
-			lvi.pszText = szBuffer;
-			m_list->SetItem(&lvi);
+			m_list->SetItem(i, 1, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
 			wsprintf(szBuffer, _T("%ld"), iter->GetState());
-			lvi.iItem = i;
-			lvi.iSubItem = 2;
-			lvi.mask = LVIF_TEXT;
-			lvi.pszText = szBuffer;
-			m_list->SetItem(&lvi);
+			m_list->SetItem(i, 2, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
 		}
 		else
 		{
@@ -107,32 +95,14 @@ void PortsManager::Update()
 	{
 		int i = m_list->GetItemCount();
 		TCHAR szBuffer[1024];
-		DWORD cchBuf(1024);
-		LVITEM lvi;
-		lvi.iItem = i;
-		lvi.iSubItem = 0;
-		lvi.mask = LVIF_TEXT;
 		wsprintf(szBuffer, _T("%ld"), it->GetPort());
-		lvi.pszText = szBuffer;
-		lvi.cchTextMax = cchBuf;
-		m_list->InsertItem(&lvi);
-		lvi.iItem = i;
-		lvi.iSubItem = 1;
-		lvi.mask = LVIF_TEXT;
+		m_list->InsertItem(i, szBuffer);
 		wsprintf(szBuffer, _T("%ld"), it->GetUsage());
-		lvi.pszText = szBuffer;
-		lvi.cchTextMax = cchBuf;
-		m_list->InsertItem(&lvi);
-		lvi.iItem = i;
-		lvi.iSubItem = 2;
-		lvi.mask = LVIF_TEXT;
+		m_list->SetItem(i, 1, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
 		wsprintf(szBuffer, _T("%ld"), it->GetState());
-		lvi.pszText = szBuffer;
-		lvi.cchTextMax = cchBuf;
-		m_list->InsertItem(&lvi);
+		m_list->SetItem(i, 2, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
 	}
-	/*
-	*/
+	UpdateChart();
 }
 
 bool PortsManager::UpdatePort(PortSet::iterator &iter)
@@ -142,5 +112,57 @@ bool PortsManager::UpdatePort(PortSet::iterator &iter)
 	USHORT port = iter->GetPort();
 	m_helper->RawIo(GET_PORTUSAGE, &port, sizeof(port), &usage, sizeof(usage));
 	iter->SetUsage(usage);
+	TraceSet::iterator it = m_traces.find(UsageTrace(port));
+	if(it == m_traces.end()){
+		UsageTrace trace(port);
+		trace.InsertUsage(usage);
+		m_traces.insert(trace);
+	}else{
+		it->InsertUsage(usage);
+	}
 	return true;
+}
+
+int PortsManager::GetPortFromList(int id)
+{
+	TCHAR szBuffer[1024];
+	char ascii[1024];
+	DWORD cchBuf(1024);
+	LVITEM lvi;
+	lvi.iItem = id;
+	lvi.iSubItem = 0;
+	lvi.mask = LVIF_TEXT;
+	lvi.pszText = szBuffer;
+	lvi.cchTextMax = cchBuf;
+	m_list->GetItem(&lvi);
+	wcstombs(ascii, szBuffer, 1024);
+	return atoi(ascii);
+}
+
+
+void PortsManager::ChangeSelected(int id)
+{
+	int port = GetPortFromList(id);
+	m_selectedPort = port;
+	UpdateChart();
+}
+
+void PortsManager::UpdateChart()
+{
+	//m_chart->EnableRefresh(false);
+	m_chart->RemoveAllSeries();
+	CChartLineSerie* pLineSerie = dynamic_cast<CChartLineSerie*> (m_chart->AddSerie(CChartSerie::stLineSerie));
+	TraceSet::iterator it = m_traces.find(m_selectedPort);
+	TRACE("selected port is %d\n",m_selectedPort);
+	if(it == m_traces.end()) return;
+	std::list<int>::iterator iter = it->begin();
+	int x = 0;
+	int y = 0;
+	for(;iter!=it->end();iter++){
+		pLineSerie->AddPoint(x++, *iter);
+		y = *iter;
+	}
+	m_chart->GetLeftAxis()->SetMinMax(-10,y);
+	m_chart->GetBottomAxis()->SetMinMax(-1,x);
+	//m_chart->EnableRefresh(true);
 }

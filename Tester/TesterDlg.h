@@ -44,8 +44,8 @@ protected:
 	afx_msg void OnBnClickedBruleDelete();
 	afx_msg void OnBnClickedCheck();
 	afx_msg void OnBnClickedBupdate();
-	afx_msg void OnHdnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnLvnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult);
 	
 	CString m_myIP;
 	CButton m_bStart;
@@ -68,5 +68,5 @@ protected:
 	CListCtrl m_listPorts;
 	PortsManager m_portsManager;
 	const int update_interval;
-	CChartCtrl m_ChartCtrl;
+	CChartCtrl m_chartCtrl;
 };

@@ -68,5 +68,6 @@
 #endif
 
 #include <vector>
+#include <list>
 #include <set>
 #include <algorithm>
