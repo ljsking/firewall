@@ -34,35 +34,28 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+	afx_msg void OnBnClickedCheck();
 	afx_msg void OnBnClickedBStart();
 	afx_msg void OnBnClickedBStop();
 	afx_msg void OnBnClickedBRuleAdd();
 	afx_msg void OnBnClickedBwordAdd();
-	afx_msg void OnLbnSelcancelListWord();
-	afx_msg void OnLbnSelchangeListWord();
 	afx_msg void OnBnClickedBwordDelete();
-	afx_msg void OnLvnItemchangedListRule(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBruleDelete();
-	afx_msg void OnBnClickedCheck();
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnLvnItemchangedListRule(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnLvnItemchangedListWord(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	
 	CString m_myIP;
-	CButton m_bStart;
-	CButton m_bStop;
 	CString m_sourceIP;
 	CString m_sourceMask;
 	CString m_sourcePort;
 	CString m_destIP;
 	CString m_destMask;
 	CString m_destPort;
-	CButton m_bRuleAdd;
-	CButton m_bRuleDelete;
 	CListCtrl m_listRules;
-	CListBox m_listWords;
+	CListCtrl m_listWords;
 	CString m_word;
-	CButton m_bWordAdd;
-	CButton m_bWordDelete;
 	int m_protocolType;
 	CListCtrl m_listPorts;
 	PortsManager m_portsManager;
@@ -77,4 +70,7 @@ protected:
 	int m_maxSession;
 	int m_nowSession;
 	int m_total;
+	int m_idRule;
+	int m_idWord;
+	bool m_started;
 };

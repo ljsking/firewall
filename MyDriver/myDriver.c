@@ -229,6 +229,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			break;
 
 		case DEL_RULE:
+			dprintf("MyDriver.SYS: DEL_RULE input: %d, %d\n",inputBufferLength, sizeof(USHORT));
 			if(inputBufferLength == sizeof(USHORT))
 			{
 				DeleteRule(*((USHORT *)ioBuffer));

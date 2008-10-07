@@ -66,6 +66,9 @@ CTesterDlg::CTesterDlg(CWnd* pParent /*=NULL*/)
 	, m_nowSession(0)
 	, m_total(0)
 	, m_exceed(false)
+	, m_idRule(0)
+	, m_idWord(0)
+	, m_started(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -74,21 +77,15 @@ void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_MY_IP, m_myIP);
-	DDX_Control(pDX, IDC_BSTART, m_bStart);
-	DDX_Control(pDX, IDC_BSTOP, m_bStop);
 	DDX_Text(pDX, IDC_ERULE_SOURCE_IP, m_sourceIP);
 	DDX_Text(pDX, IDC_ERULE_SOURCE_MASK, m_sourceMask);
 	DDX_Text(pDX, IDC_ERULE_SOURCE_PORT, m_sourcePort);
 	DDX_Text(pDX, IDC_ERULE_DEST_IP, m_destIP);
 	DDX_Text(pDX, IDC_ERULE_DEST_MASK, m_destMask);
 	DDX_Text(pDX, IDC_ERULE_DEST_PORT, m_destPort);
-	DDX_Control(pDX, IDC_BRULE_ADD, m_bRuleAdd);
-	DDX_Control(pDX, IDC_BRULE_DELETE, m_bRuleDelete);
 	DDX_Control(pDX, IDC_LIST_RULE, m_listRules);
 	DDX_Control(pDX, IDC_LIST_WORD, m_listWords);
 	DDX_Text(pDX, IDC_EWORD, m_word);
-	DDX_Control(pDX, IDC_BWORD_ADD, m_bWordAdd);
-	DDX_Control(pDX, IDC_BWORD_DELETE, m_bWordDelete);
 	DDX_CBIndex(pDX, IDC_COMBO1, m_protocolType);
 	DDX_Check(pDX, IDC_CHECK_RULE, m_IPFilter);
 	DDX_Check(pDX, IDC_CHECK_WORD, m_wordFilter);
@@ -109,17 +106,16 @@ BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
 	ON_BN_CLICKED(IDC_BSTOP, &CTesterDlg::OnBnClickedBStop)
 	ON_BN_CLICKED(IDC_BRULE_ADD, &CTesterDlg::OnBnClickedBRuleAdd)
 	ON_BN_CLICKED(IDC_BWORD_ADD, &CTesterDlg::OnBnClickedBwordAdd)
-	ON_LBN_SELCANCEL(IDC_LIST_WORD, &CTesterDlg::OnLbnSelcancelListWord)
-	ON_LBN_SELCHANGE(IDC_LIST_WORD, &CTesterDlg::OnLbnSelchangeListWord)
-	ON_BN_CLICKED(IDC_BWORD_DELETE, &CTesterDlg::OnBnClickedBwordDelete)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_RULE, &CTesterDlg::OnLvnItemchangedListRule)
 	ON_BN_CLICKED(IDC_BRULE_DELETE, &CTesterDlg::OnBnClickedBruleDelete)
+	ON_BN_CLICKED(IDC_BWORD_DELETE, &CTesterDlg::OnBnClickedBwordDelete)
 	ON_BN_CLICKED(IDC_CHECK_RULE, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_CHECK_WORD, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_CHECK_SESSION, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_CHECK_MONITOR, &CTesterDlg::OnBnClickedCheck)
-	ON_WM_TIMER()
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_RULE, &CTesterDlg::OnLvnItemchangedListRule)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_WORD, &CTesterDlg::OnLvnItemchangedListWord)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_PORT, &CTesterDlg::OnLvnItemchangedListPort)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -158,6 +154,9 @@ BOOL CTesterDlg::OnInitDialog()
 	m_listPorts.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 70);
 	m_listPorts.InsertColumn(order++,_T("Usage"), LVCFMT_LEFT, 90);
 	m_listPorts.InsertColumn(order++,_T("State"), LVCFMT_LEFT, 90);
+
+	order = 0;
+	m_listWords.InsertColumn(order++,_T("Forbidden contents"), LVCFMT_LEFT, 100);
 
 	m_portsManager.Init(&helper, &m_listPorts, &m_chartCtrl);
 
@@ -205,21 +204,31 @@ HCURSOR CTesterDlg::OnQueryDragIcon()
 
 void CTesterDlg::OnBnClickedBStart()
 {
-	m_bStart.EnableWindow(0);
-	m_bStop.EnableWindow(1);
-	m_bRuleAdd.EnableWindow(1);
-	m_bWordAdd.EnableWindow(1);
+	m_started = true;
+	GetDlgItem(IDC_BSTART)->EnableWindow(0);
+	GetDlgItem(IDC_BSTOP)->EnableWindow(1);
+	GetDlgItem(IDC_BRULE_ADD)->EnableWindow(1);
+	GetDlgItem(IDC_BWORD_ADD)->EnableWindow(1);
+	GetDlgItem(IDC_CHECK_MONITOR)->EnableWindow(1);
+	GetDlgItem(IDC_CHECK_RULE)->EnableWindow(1);
+	GetDlgItem(IDC_CHECK_WORD)->EnableWindow(1);
+	GetDlgItem(IDC_CHECK_SESSION)->EnableWindow(1);
 	helper.WriteIo(START_IP_HOOK, NULL, 0);
 }
 
 void CTesterDlg::OnBnClickedBStop()
 {
-	m_bStart.EnableWindow(1);
-	m_bStop.EnableWindow(0);
-	m_bRuleAdd.EnableWindow(0);
-	m_bRuleDelete.EnableWindow(0);
-	m_bWordAdd.EnableWindow(0);
-	m_bWordDelete.EnableWindow(0);
+	m_started = false;
+	GetDlgItem(IDC_BSTART)->EnableWindow(1);
+	GetDlgItem(IDC_BSTOP)->EnableWindow(0);
+	GetDlgItem(IDC_BRULE_ADD)->EnableWindow(0);
+	GetDlgItem(IDC_BWORD_ADD)->EnableWindow(0);
+	GetDlgItem(IDC_BRULE_DELETE)->EnableWindow(0);
+	GetDlgItem(IDC_BWORD_DELETE)->EnableWindow(0);
+	GetDlgItem(IDC_CHECK_MONITOR)->EnableWindow(0);
+	GetDlgItem(IDC_CHECK_RULE)->EnableWindow(0);
+	GetDlgItem(IDC_CHECK_WORD)->EnableWindow(0);
+	GetDlgItem(IDC_CHECK_SESSION)->EnableWindow(0);
 	helper.WriteIo(STOP_IP_HOOK, NULL, 0);
 }
 
@@ -228,6 +237,8 @@ void CTesterDlg::OnBnClickedBRuleAdd()
 	UpdateData();
 
 	IPFilter pf;
+
+	pf.id = m_idRule++;
 
 	if(m_protocolType == 0)
   		pf.protocol = 0;
@@ -254,11 +265,11 @@ void CTesterDlg::OnBnClickedBRuleAdd()
 		int index = m_listRules.GetItemCount();
 		int subIndex = 1;
 		if(m_protocolType == 0)
-			m_listRules.InsertItem(index, _T("All"));
+			m_listRules.InsertItem(LVIF_TEXT|LVIF_PARAM, index, _T("All"), 0, 0, 0, pf.id);
 		else if(m_protocolType == 1)
-			m_listRules.InsertItem(index, _T("TCP"));
+			m_listRules.InsertItem(LVIF_TEXT|LVIF_PARAM, index, _T("TCP"), 0, 0, 0, pf.id);
 		else
-			m_listRules.InsertItem(index, _T("UDP"));
+			m_listRules.InsertItem(LVIF_TEXT|LVIF_PARAM, index, _T("UDP"), 0, 0, 0, pf.id);
 		m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourceIP, 0, 0, 0, 0, 0);
 		m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourceMask, 0, 0, 0, 0, 0);
 		m_listRules.SetItem(index, subIndex++, LVIF_TEXT, m_sourcePort, 0, 0, 0, 0, 0);
@@ -292,39 +303,41 @@ void CTesterDlg::OnBnClickedBwordAdd()
 {
 	UpdateData();
 	WordFilter wf;
-	wf.id = m_listWords.GetCount();
+	wf.id = m_idWord++;
 	char ascii[10];
 	wcstombs( ascii, m_word, 10 );
 	strcpy(wf.word, ascii);
 	if( AddWord(wf) )	//send the rule
-		m_listWords.AddString(m_word);
+		m_listWords.InsertItem(LVIF_TEXT|LVIF_PARAM, m_listWords.GetItemCount(), m_word, 0, 0, 0, wf.id);
 	m_word = "";
 	UpdateData(false);
 }
 
-void CTesterDlg::OnLbnSelcancelListWord()
+void CTesterDlg::OnLvnItemchangedListWord(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	m_bWordDelete.EnableWindow(0);
-}
-
-void CTesterDlg::OnLbnSelchangeListWord()
-{
-	m_bWordDelete.EnableWindow(1);
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	GetDlgItem(IDC_BWORD_DELETE)->EnableWindow(1);
+	*pResult = 0;
 }
 
 void CTesterDlg::OnBnClickedBwordDelete()
 {
-	int sel = m_listWords.GetCurSel();
-	CString selected;
-	m_listWords.GetText(sel, selected);
-	m_listWords.DeleteString(sel);
-	m_bWordDelete.EnableWindow(0);
+	POSITION pos = m_listWords.GetFirstSelectedItemPosition();
+	while (pos)
+	{
+		int nItem = m_listWords.GetNextSelectedItem(pos);
+		USHORT id = m_listWords.GetItemData(nItem);
+		if(helper.WriteIo(DEL_WORD, &id, sizeof(id))==DRV_SUCCESS){
+			m_listWords.DeleteItem(nItem);
+			GetDlgItem(IDC_BWORD_DELETE)->EnableWindow(0);
+		}
+	}
 }
 
 void CTesterDlg::OnLvnItemchangedListRule(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-	m_bRuleDelete.EnableWindow(1);
+	GetDlgItem(IDC_BRULE_DELETE)->EnableWindow(1);
 	*pResult = 0;
 }
 
@@ -334,10 +347,12 @@ void CTesterDlg::OnBnClickedBruleDelete()
 	while (pos)
 	{
 		int nItem = m_listRules.GetNextSelectedItem(pos);
-		m_listRules.DeleteItem(nItem);
-		m_bRuleDelete.EnableWindow(0);
+		USHORT id = m_listRules.GetItemData(nItem);
+		if(helper.WriteIo(DEL_RULE, &id, sizeof(id))==DRV_SUCCESS){
+			m_listRules.DeleteItem(nItem);
+			GetDlgItem(IDC_BRULE_DELETE)->EnableWindow(0);
+		}
 	}
-
 }
 
 void CTesterDlg::OnBnClickedCheck()
@@ -369,7 +384,7 @@ void CTesterDlg::UpdatePorts()
 }
 void CTesterDlg::OnTimer(UINT_PTR nIDEvent)
 {
-	if (nIDEvent==100 && m_portMonitor)
+	if (m_started && nIDEvent==100 && m_portMonitor)
     {
 		UpdateData();
         SetTimer(100, update_interval, NULL);   // 타이머 다시 세팅..
