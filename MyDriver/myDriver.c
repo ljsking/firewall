@@ -18,6 +18,7 @@ PortList *FindPort(USHORT port);
 void ClearFilterList(void);
 void ClearWordList(void);
 void ClearPortList(void);
+void DeletePort(USHORT);
 
 struct filterList *firstFilter = NULL;
 struct filterList *lastFilter = NULL;
@@ -227,6 +228,14 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 					dprintf("DrvFltIp.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
 				}
 				
+			}
+			break;
+		
+		case DEL_PORT:
+			if(inputBufferLength == sizeof(USHORT))
+			{
+				DeletePort(*((USHORT *)ioBuffer));
+				dprintf("DrvFltIp.SYS: DEL_PORT usage %d\n",*((USHORT *)ioBuffer));
 			}
 			break;
 
@@ -889,4 +898,57 @@ void ClearPortList(void)
 	firstPort = lastPort = NULL;
 
 	dprintf("Removed is complete.");
+}
+
+/*++
+
+Routine Description:
+
+    Remove the port by portnumber
+
+Arguments:
+	Port number
+
+Return Value:
+
+ 
+--*/
+void DeletePort(USHORT port)
+{
+	struct portList *aux = NULL;
+	struct portList *target = NULL;
+
+	//free the linked list
+	dprintf("Removing the port List...");
+	
+	if(firstPort == NULL || lastPort == NULL)
+		return;
+
+	if(firstPort->pusage.port == port)
+	{
+		target = firstPort;
+		if(lastPort == port)
+			firstPort = lastPort = NULL;
+		else
+			firstPort = firstPort->next;
+	}
+	else
+	{
+		aux = firstPort;
+		while(aux->next != NULL)
+		{
+			if(aux->next->pusage.port == port)
+			{
+				target = aux->next;
+				aux->next = aux->next->next;
+				if(target == lastPort)
+				{
+					lastPort = aux;
+				}
+				break;
+			}
+			aux = aux->next;
+		}
+	}
+	ExFreePool(target);
 }

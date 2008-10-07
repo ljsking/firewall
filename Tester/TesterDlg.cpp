@@ -55,6 +55,7 @@ CTesterDlg::CTesterDlg(CWnd* pParent /*=NULL*/)
 	, m_destPort(_T("0"))
 	, m_word(_T(""))
 	, m_protocolType(0)
+	, update_interval(1000)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -107,6 +108,7 @@ BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
 	ON_BN_CLICKED(IDC_CHECK_MONITOR, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_BUPDATE, &CTesterDlg::OnBnClickedBupdate)
 	ON_NOTIFY(HDN_ITEMCHANGED, 0, &CTesterDlg::OnHdnItemchangedListPort)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -333,6 +335,8 @@ void CTesterDlg::OnBnClickedCheck()
 {
 	UpdateData();
 	DWORD result = helper.WriteIo(SET_SETTING, &m_setting, sizeof(FirewallSetting));
+	if(m_setting.PortMonitor)
+		SetTimer(100, update_interval, NULL);
 	UpdateData(false);
 }
 
@@ -340,8 +344,7 @@ void CTesterDlg::OnBnClickedBupdate()
 {
 	int now = -1;
 	DWORD result = helper.ReadIo(GET_SETTING, &now, sizeof(int));
-	UpdatePorts();
-	UpdateData(false);
+	
 }
 
 void CTesterDlg::OnHdnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult)
@@ -359,4 +362,15 @@ void CTesterDlg::UpdatePorts()
 	//item.pszText = _T("80");
 	//BOOL rz = m_listPorts.GetItem(&item);
 	m_portsManager.Update();
+}
+void CTesterDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (nIDEvent==100 && m_setting.PortMonitor)
+    {
+        SetTimer(100, update_interval, NULL);   // 타이머 다시 세팅..
+		UpdatePorts();
+		UpdateData(false);
+    }
+	CDialog::OnTimer(nIDEvent);
 }

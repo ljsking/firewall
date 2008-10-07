@@ -60,7 +60,8 @@ void PortsManager::Update()
 	TRACE("diff ports %d, %d\n", ports.size(), newPorts.size());
 	for(PortsIterator it = tmp.begin();it!=end;it++)
 	{
-		TRACE("%d\n",it->GetPort());
+		USHORT port = it->GetPort();
+		m_helper->WriteIo(DEL_PORT, &port, sizeof(port));
 	}
 	ports = newPorts;
 	for(PortSet::iterator iter = ports.begin(); iter!=ports.end(); iter++){

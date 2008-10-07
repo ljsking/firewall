@@ -66,4 +66,7 @@ protected:
 	FirewallSetting m_setting;
 	CListCtrl m_listPorts;
 	PortsManager m_portsManager;
+	const int update_interval;
+public:
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
