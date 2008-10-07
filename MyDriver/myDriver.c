@@ -18,6 +18,8 @@ PortList *FindPort(USHORT port);
 void ClearFilterList(void);
 void ClearWordList(void);
 void ClearPortList(void);
+void DeleteRule(USHORT);
+void DeleteWord(USHORT);
 void DeletePort(USHORT);
 
 struct filterList *firstFilter = NULL;
@@ -223,6 +225,22 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 					//dprintf("MyDriver.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
 				}
 				
+			}
+			break;
+
+		case DEL_RULE:
+			if(inputBufferLength == sizeof(USHORT))
+			{
+				DeleteRule(*((USHORT *)ioBuffer));
+				//dprintf("MyDriver.SYS: DEL_PORT usage %d\n",*((USHORT *)ioBuffer));
+			}
+			break;
+
+		case DEL_WORD:
+			if(inputBufferLength == sizeof(USHORT))
+			{
+				DeleteWord(*((USHORT *)ioBuffer));
+				//dprintf("MyDriver.SYS: DEL_PORT usage %d\n",*((USHORT *)ioBuffer));
 			}
 			break;
 		
@@ -888,6 +906,112 @@ void ClearPortList(void)
 
 Routine Description:
 
+    Remove the rule by id
+
+Arguments:
+	rule id
+
+Return Value:
+
+ 
+--*/
+void DeleteRule(USHORT id)
+{
+	struct filterList *aux = NULL;
+	struct filterList *target = NULL;
+
+	//free the linked list
+	//dprintf("MyDriver.SYS: Removing the port List...");
+	
+	if(firstFilter == NULL || lastFilter == NULL)
+		return;
+
+	if(firstFilter->ipf.id == id)
+	{
+		target = firstFilter;
+		if(lastFilter->ipf.id == id)
+			firstFilter = lastFilter = NULL;
+		else
+			firstFilter = firstFilter->next;
+	}
+	else
+	{
+		aux = firstFilter;
+		while(aux->next != NULL)
+		{
+			if(aux->next->ipf.id == id)
+			{
+				target = aux->next;
+				aux->next = aux->next->next;
+				if(target == lastFilter)
+				{
+					lastFilter = aux;
+				}
+				break;
+			}
+			aux = aux->next;
+		}
+	}
+	ExFreePool(target);
+}
+
+/*++
+
+Routine Description:
+
+    Remove the word by id
+
+Arguments:
+	word id
+
+Return Value:
+
+ 
+--*/
+void DeleteWord(USHORT id)
+{
+	struct wordList *aux = NULL;
+	struct wordList *target = NULL;
+
+	//free the linked list
+	//dprintf("MyDriver.SYS: Removing the port List...");
+	
+	if(firstWord == NULL || lastWord == NULL)
+		return;
+
+	if(firstWord->wordf.id == id)
+	{
+		target = firstWord;
+		if(lastWord->wordf.id == id)
+			firstWord = lastWord = NULL;
+		else
+			firstWord = firstWord->next;
+	}
+	else
+	{
+		aux = firstWord;
+		while(aux->next != NULL)
+		{
+			if(aux->next->wordf.id == id)
+			{
+				target = aux->next;
+				aux->next = aux->next->next;
+				if(target == lastWord)
+				{
+					lastWord = aux;
+				}
+				break;
+			}
+			aux = aux->next;
+		}
+	}
+	ExFreePool(target);
+}
+
+/*++
+
+Routine Description:
+
     Remove the port by portnumber
 
 Arguments:
@@ -911,7 +1035,7 @@ void DeletePort(USHORT port)
 	if(firstPort->pusage.port == port)
 	{
 		target = firstPort;
-		if(lastPort == port)
+		if(lastPort->pusage.port == port)
 			firstPort = lastPort = NULL;
 		else
 			firstPort = firstPort->next;
