@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include <vector>
 #include "Port.h"
 
 Port::Port():port(0)

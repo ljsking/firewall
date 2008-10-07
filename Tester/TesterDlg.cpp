@@ -8,14 +8,11 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Iphlpapi.lib")
 
-#include <set>
-#include <vector>
-#include <algorithm>
-
 #include "FilterHelper.h"
 #include "..\\myDriver\\Filter.h"
 #include "Tester.h"
 #include "Port.h"
+#include "PortsManager.h"
 #include "TesterDlg.h"
 
 #ifdef _DEBUG
@@ -152,6 +149,7 @@ BOOL CTesterDlg::OnInitDialog()
 	helper.ReadIo(GET_SETTING, &m_setting, sizeof(FirewallSetting));
 	m_setting.MaxSession = 100;
 	m_setting.NowSession = 0;
+	m_portsManager.Init(&helper, &m_listPorts);
 	UpdateData(false);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
@@ -360,56 +358,5 @@ void CTesterDlg::UpdatePorts()
 	item.iSubItem = 1;
 	//item.pszText = _T("80");
 	//BOOL rz = m_listPorts.GetItem(&item);
-	GetPortInfomation();
-}
-
-void CTesterDlg::GetPortInfomation()
-{
-	DWORD i;
-	PMIB_TCPTABLE pTcpTable;
-	DWORD dwSize = 0;
-	DWORD dwRetVal = 0;
-	Ports newPorts;
-
-	char *addr_ptr;
-	unsigned short *port_ptr;
-
-	/* Get size required by GetTcpTable() */
-	if (GetTcpTable(NULL, &dwSize, 0) == ERROR_INSUFFICIENT_BUFFER) {
-		pTcpTable = (MIB_TCPTABLE *) malloc (dwSize);
-	}
-
-	/* Get actual data using GetTcpTable() */
-	if ((dwRetVal = GetTcpTable(pTcpTable, &dwSize, 0)) == NO_ERROR) {
-		if (pTcpTable->dwNumEntries > 0) {
-			for (i=0; i<pTcpTable->dwNumEntries; i++) {
-				//addr_ptr = (char *)&pTcpTable->table[i].dwLocalAddr;
-				port_ptr = (unsigned short *)&pTcpTable->table[i].dwLocalPort;
-				//addr_ptr = (char *)&pTcpTable->table[i].dwRemoteAddr;
-				//port_ptr = (unsigned short *)&pTcpTable->table[i].dwRemotePort;
-				DWORD state = pTcpTable->table[i].dwState;
-				TCHAR buf[100];
-				wsprintf(buf, _T("%ld"), *port_ptr);
-				m_listPorts.InsertItem(1, buf);
-				wsprintf(buf, _T("%ld"), 0);
-				m_listPorts.SetItem(1, 1, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
-				wsprintf(buf, _T("%ld"), state);
-				m_listPorts.SetItem(1, 2, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
-				newPorts.push_back(Port(*port_ptr, state));
-			}
-		}
-	}
-	free(pTcpTable);
-
-	std::sort(newPorts.begin(), newPorts.end());
-	std::sort(ports.begin(), ports.end());
-	Ports tmp(ports.size()+newPorts.size());
-	PortsIterator end=std::set_difference (ports.begin(), ports.end(), newPorts.begin(), newPorts.end(), tmp.begin());
-	TRACE("diff ports %d, %d\n", ports.size(), newPorts.size());
-	for(PortsIterator it = tmp.begin();it!=end;it++)
-	{
-		TRACE("%d\n",it->GetPort());
-	}
-	ports.resize(newPorts.size());
-	copy(newPorts.begin(), newPorts.end(), ports.begin());
+	m_portsManager.Update();
 }

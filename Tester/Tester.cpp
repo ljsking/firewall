@@ -2,10 +2,10 @@
 //
 
 #include "stdafx.h"
-#include <vector>
 #include "FilterHelper.h"
-#include "Port.h"
 #include "..\\myDriver\\Filter.h"
+#include "Port.h"
+#include "PortsManager.h"
 #include "Tester.h"
 #include "TesterDlg.h"
 

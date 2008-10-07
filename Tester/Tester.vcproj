@@ -199,6 +199,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PortsManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -238,6 +242,10 @@
 			</File>
 			<File
 				RelativePath=".\Port.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PortsManager.h"
 				>
 			</File>
 			<File

@@ -18,3 +18,4 @@ private:
 
 typedef std::vector<Port> Ports;
 typedef std::vector<Port>::iterator PortsIterator;
+typedef std::set<Port> PortSet;
