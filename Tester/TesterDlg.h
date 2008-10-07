@@ -65,6 +65,8 @@ protected:
 	int m_protocolType;
 	FirewallSetting m_setting;
 	CListCtrl m_listPorts;
+
+	Ports	ports;
 public:
 	afx_msg void OnHdnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult);
 };

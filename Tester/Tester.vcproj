@@ -195,6 +195,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Port.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -230,6 +234,10 @@
 			>
 			<File
 				RelativePath=".\FilterHelper.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Port.h"
 				>
 			</File>
 			<File

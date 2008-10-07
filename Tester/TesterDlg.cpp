@@ -2,15 +2,21 @@
 //
 
 #include "stdafx.h"
-#include "FilterHelper.h"
-#include "..\\myDriver\\Filter.h"
-#include "Tester.h"
-#include "TesterDlg.h"
 
 #include <winsock2.h>
 #include <iphlpapi.h>
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Iphlpapi.lib")
+
+#include <set>
+#include <vector>
+#include <algorithm>
+
+#include "FilterHelper.h"
+#include "..\\myDriver\\Filter.h"
+#include "Tester.h"
+#include "Port.h"
+#include "TesterDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -336,7 +342,6 @@ void CTesterDlg::OnBnClickedBupdate()
 {
 	int now = -1;
 	DWORD result = helper.ReadIo(GET_SETTING, &now, sizeof(int));
-	TRACE("m_setting now %d, %d\n", now, m_setting.MaxSession);
 	UpdatePorts();
 	UpdateData(false);
 }
@@ -364,6 +369,7 @@ void CTesterDlg::GetPortInfomation()
 	PMIB_TCPTABLE pTcpTable;
 	DWORD dwSize = 0;
 	DWORD dwRetVal = 0;
+	Ports newPorts;
 
 	char *addr_ptr;
 	unsigned short *port_ptr;
@@ -389,8 +395,21 @@ void CTesterDlg::GetPortInfomation()
 				m_listPorts.SetItem(1, 1, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
 				wsprintf(buf, _T("%ld"), state);
 				m_listPorts.SetItem(1, 2, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
+				newPorts.push_back(Port(*port_ptr, state));
 			}
 		}
 	}
 	free(pTcpTable);
+
+	std::sort(newPorts.begin(), newPorts.end());
+	std::sort(ports.begin(), ports.end());
+	Ports tmp(ports.size()+newPorts.size());
+	PortsIterator end=std::set_difference (ports.begin(), ports.end(), newPorts.begin(), newPorts.end(), tmp.begin());
+	TRACE("diff ports %d, %d\n", ports.size(), newPorts.size());
+	for(PortsIterator it = tmp.begin();it!=end;it++)
+	{
+		TRACE("%d\n",it->GetPort());
+	}
+	ports.resize(newPorts.size());
+	copy(newPorts.begin(), newPorts.end(), ports.begin());
 }
