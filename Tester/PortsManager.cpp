@@ -57,23 +57,82 @@ void PortsManager::Update()
 	PortSet newPorts = GetNowPorts();
 	Ports tmp(ports.size()+newPorts.size());
 	PortsIterator end=std::set_difference (ports.begin(), ports.end(), newPorts.begin(), newPorts.end(), tmp.begin());
-	TRACE("diff ports %d, %d\n", ports.size(), newPorts.size());
 	for(PortsIterator it = tmp.begin();it!=end;it++)
 	{
 		USHORT port = it->GetPort();
 		m_helper->WriteIo(DEL_PORT, &port, sizeof(port));
 	}
+	end=std::set_difference (newPorts.begin(), newPorts.end(), ports.begin(), ports.end(), tmp.begin());
 	ports = newPorts;
 	for(PortSet::iterator iter = ports.begin(); iter!=ports.end(); iter++){
 		UpdatePort(iter);
-		TCHAR buf[100];
-		wsprintf(buf, _T("%ld"), iter->GetPort());
-		m_list->InsertItem(1, buf);
-		wsprintf(buf, _T("%ld"), iter->GetUsage());
-		m_list->SetItem(1, 1, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
-		wsprintf(buf, _T("%ld"), iter->GetState());
-		m_list->SetItem(1, 2, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
 	}
+	for(int i = 0; i<m_list->GetItemCount(); i++)
+	{
+		TCHAR szBuffer[1024];
+		char ascii[1024];
+		DWORD cchBuf(1024);
+		LVITEM lvi;
+		lvi.iItem = i;
+		lvi.iSubItem = 0;
+		lvi.mask = LVIF_TEXT;
+		lvi.pszText = szBuffer;
+		lvi.cchTextMax = cchBuf;
+		m_list->GetItem(&lvi);
+		wcstombs(ascii, szBuffer, 1024);
+		int port = atoi(ascii);
+		PortSet::iterator iter = ports.find(Port(port, 0));
+		if(iter!=ports.end())
+		{
+			wsprintf(szBuffer, _T("%ld"), iter->GetUsage());
+			lvi.iItem = i;
+			lvi.iSubItem = 1;
+			lvi.mask = LVIF_TEXT;
+			lvi.pszText = szBuffer;
+			m_list->SetItem(&lvi);
+			wsprintf(szBuffer, _T("%ld"), iter->GetState());
+			lvi.iItem = i;
+			lvi.iSubItem = 2;
+			lvi.mask = LVIF_TEXT;
+			lvi.pszText = szBuffer;
+			m_list->SetItem(&lvi);
+		}
+		else
+		{
+			m_list->DeleteItem(i);
+			i--;
+		}
+	}
+	for(PortsIterator it = tmp.begin();it!=end;it++)
+	{
+		int i = m_list->GetItemCount();
+		TCHAR szBuffer[1024];
+		DWORD cchBuf(1024);
+		LVITEM lvi;
+		lvi.iItem = i;
+		lvi.iSubItem = 0;
+		lvi.mask = LVIF_TEXT;
+		wsprintf(szBuffer, _T("%ld"), it->GetPort());
+		lvi.pszText = szBuffer;
+		lvi.cchTextMax = cchBuf;
+		m_list->InsertItem(&lvi);
+		lvi.iItem = i;
+		lvi.iSubItem = 1;
+		lvi.mask = LVIF_TEXT;
+		wsprintf(szBuffer, _T("%ld"), it->GetUsage());
+		lvi.pszText = szBuffer;
+		lvi.cchTextMax = cchBuf;
+		m_list->InsertItem(&lvi);
+		lvi.iItem = i;
+		lvi.iSubItem = 2;
+		lvi.mask = LVIF_TEXT;
+		wsprintf(szBuffer, _T("%ld"), it->GetState());
+		lvi.pszText = szBuffer;
+		lvi.cchTextMax = cchBuf;
+		m_list->InsertItem(&lvi);
+	}
+	/*
+	*/
 }
 
 bool PortsManager::UpdatePort(PortSet::iterator &iter)

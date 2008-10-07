@@ -355,12 +355,7 @@ void CTesterDlg::OnHdnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult)
 
 void CTesterDlg::UpdatePorts()
 {
-	m_listPorts.DeleteAllItems();
-	LVITEM item;
-	item.iItem = 0;
-	item.iSubItem = 1;
-	//item.pszText = _T("80");
-	//BOOL rz = m_listPorts.GetItem(&item);
+	//m_listPorts.DeleteAllItems();
 	m_portsManager.Update();
 }
 void CTesterDlg::OnTimer(UINT_PTR nIDEvent)
