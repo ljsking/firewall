@@ -141,7 +141,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 	case IRP_MJ_DEVICE_CONTROL:
 		ioControlCode = irpStack->Parameters.DeviceIoControl.IoControlCode;
-		dprintf("MyDriver.SYS: IRP_MJ_DEVICE_CONTROL :%d\n", ioControlCode);
+		//%dprintf("MyDriver.SYS: IRP_MJ_DEVICE_CONTROL :%d\n", ioControlCode);
 
 		//memcpy(lpOutBuf, myTemp, nOutBufSize);
 		switch (ioControlCode)
@@ -163,17 +163,17 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		case ADD_FILTER:
 			if(inputBufferLength == sizeof(IPFilter))
 			{
-				dprintf("MyDriver.SYS: ADD_FILTER\n");
+				//dprintf("MyDriver.SYS: ADD_FILTER\n");
 				nf = (IPFilter *)ioBuffer;
 				AddFilterToList(nf);
 			}
 			break;
 
 		case ADD_WORD:
-			dprintf("MyDriver.SYS: ADD_WORD1 %d %d\n", inputBufferLength, sizeof(WordFilter));
+			//dprintf("MyDriver.SYS: ADD_WORD1 %d %d\n", inputBufferLength, sizeof(WordFilter));
 			if(inputBufferLength == sizeof(WordFilter))
 			{
-				dprintf("MyDriver.SYS: ADD_WORD2\n");
+				//dprintf("MyDriver.SYS: ADD_WORD2\n");
 				wf = (WordFilter *)ioBuffer;
 				AddWordToList(wf);
 			}
@@ -182,11 +182,11 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			// ioctl to free filter rule list
 		case CLEAR_FILTER:
 			ClearFilterList();
-			dprintf("MyDriver.SYS: CLEAR_FILTER\n");
+			//dprintf("MyDriver.SYS: CLEAR_FILTER\n");
 			break;
 
 		case SET_SETTING:
-			dprintf("MyDriver.SYS: SET_SETTING %d %d\n", inputBufferLength, sizeof(FirewallSetting));
+			//dprintf("MyDriver.SYS: SET_SETTING %d %d\n", inputBufferLength, sizeof(FirewallSetting));
 			if(inputBufferLength == sizeof(FirewallSetting))
 			{
 				fs = (FirewallSetting *)ioBuffer;
@@ -196,13 +196,13 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 				setting.PortMonitor = fs->PortMonitor;
 				setting.SessionFilter = fs->SessionFilter;
 				setting.WordFilter = fs->WordFilter;
-				dprintf("MyDriver.SYS: SET_SETTING\n");
+				//dprintf("MyDriver.SYS: SET_SETTING\n");
 				//memcpy(&setting, ioBuffer, sizeof(FirewallSetting));
 			}
 			break;
 
 		case GET_TOTAL:
-			dprintf("MyDriver.SYS: GET_SETTING %d %d\n", outputBufferLength, sizeof(int));
+			//dprintf("MyDriver.SYS: GET_SETTING %d %d\n", outputBufferLength, sizeof(int));
 			if(outputBufferLength == sizeof(ULONG))
 			{
 				RtlCopyMemory(ioBuffer, &PacketLengthsum, sizeof(ULONG));
@@ -211,16 +211,16 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			break;
 
 		case GET_PORTUSAGE:
-			dprintf("MyDriver.SYS: GET_PORTUSAGE %d %d %d %d\n", inputBufferLength, sizeof(USHORT), outputBufferLength, sizeof(ULONG));
+			//dprintf("MyDriver.SYS: GET_PORTUSAGE %d %d %d %d\n", inputBufferLength, sizeof(USHORT), outputBufferLength, sizeof(ULONG));
 			if(outputBufferLength == sizeof(int) && inputBufferLength == sizeof(USHORT))
 			{
-				dprintf("MyDriver.SYS: GET_PORTUSAGE input: %u\n",*((USHORT *)ioBuffer));
+				//dprintf("MyDriver.SYS: GET_PORTUSAGE input: %u\n",*((USHORT *)ioBuffer));
 				pl = FindPort(*((USHORT *)ioBuffer));
 				if(pl!=NULL)
 				{
 					RtlCopyMemory(ioBuffer, &(pl->pusage.usage), sizeof(ULONG));
 					Irp->IoStatus.Information = sizeof(ULONG);
-					dprintf("MyDriver.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
+					//dprintf("MyDriver.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
 				}
 				
 			}
@@ -230,7 +230,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			if(inputBufferLength == sizeof(USHORT))
 			{
 				DeletePort(*((USHORT *)ioBuffer));
-				dprintf("MyDriver.SYS: DEL_PORT usage %d\n",*((USHORT *)ioBuffer));
+				//dprintf("MyDriver.SYS: DEL_PORT usage %d\n",*((USHORT *)ioBuffer));
 			}
 			break;
 
@@ -537,7 +537,7 @@ int PortMonitoring(IPPacket *ipp, unsigned char *Packet, unsigned int PacketLeng
 		if(aux->pusage.port == port)
 		{
 			aux->pusage.usage+=PacketLength;
-			dprintf("MyDriver.SYS: Found it %d %d\n", port, aux->pusage.usage);
+			//dprintf("MyDriver.SYS: Found it %d %d\n", port, aux->pusage.usage);
 			break;
 		}
 		aux = aux->next;
@@ -588,7 +588,7 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
 		return PF_FORWARD;
 	while(aux != NULL)
 	{
-		dprintf("MyDriver.SYS: Comparing with Rule %d", countRule);
+		//dprintf("MyDriver.SYS: Comparing with Rule %d", countRule);
 
 		//if protocol is the same....
 		if(aux->ipf.protocol == 0 || ipp->ipProtocol == aux->ipf.protocol)
@@ -662,6 +662,7 @@ PF_FORWARD_ACTION FilterBySession(IPPacket *ipp, unsigned char *Packet)
 {
 	if(!setting.SessionFilter)
 		return PF_FORWARD;
+	dprintf("MyDriver.SYS: %d\n", setting.Exceed);
 	if( setting.SessionFilter && ipp->ipProtocol == 6)
 	{
 		TCPHeader *tcph=(TCPHeader *)Packet; 
@@ -696,11 +697,11 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 	ipp=(IPPacket *)PacketHeader;
 	PacketLengthsum +=PacketLength;
 	if(setting.PortMonitor){
-		dprintf("MyDriver.SYS: Tama?: %x, %d", PacketLength, RecvInterfaceIndex);
-		dprintf("MyDriver.SYS: Source: %x\nDestination: %x\nProtocol: %d", ipp->ipSource, ipp->ipDestination, ipp->ipProtocol);
+		//dprintf("MyDriver.SYS: Tama?: %x, %d", PacketLength, RecvInterfaceIndex);
+		//dprintf("MyDriver.SYS: Source: %x\nDestination: %x\nProtocol: %d", ipp->ipSource, ipp->ipDestination, ipp->ipProtocol);
 
-		dprintf("MyDriver.SYS: PacketLength: %d", PacketLength);
-		dprintf("MyDriver.SYS: PacketLength ÃÑ ÇÕ: %d", PacketLengthsum);
+		//dprintf("MyDriver.SYS: PacketLength: %d", PacketLength);
+		//dprintf("MyDriver.SYS: PacketLength ÃÑ ÇÕ: %d", PacketLengthsum);
 	}
 	PortMonitoring(ipp, Packet, PacketLength);
 	rz = FilterBySession(ipp, Packet);
@@ -806,13 +807,13 @@ PortList *FindPort(USHORT port)
 	struct portList *aux = firstPort;
 
 	//free the linked list
-	dprintf("MyDriver.SYS: Finding the port List...");
+	//dprintf("MyDriver.SYS: Finding the port List...");
 	
 	while(aux != NULL)
 	{
 		if(aux->pusage.port == port)
 		{
-			dprintf("MyDriver.SYS: Found it");
+			//dprintf("MyDriver.SYS: Found it");
 			break;
 		}
 		aux = aux->next;
@@ -844,7 +845,7 @@ PortList *FindPort(USHORT port)
 			lastPort->next = NULL;
 		}
 
-		dprintf("MyDriver.SYS: Port Added\t%d\n", aux->pusage.port);
+		//dprintf("MyDriver.SYS: Port Added\t%d\n", aux->pusage.port);
 	}
 	return aux;
 }
@@ -902,7 +903,7 @@ void DeletePort(USHORT port)
 	struct portList *target = NULL;
 
 	//free the linked list
-	dprintf("MyDriver.SYS: Removing the port List...");
+	//dprintf("MyDriver.SYS: Removing the port List...");
 	
 	if(firstPort == NULL || lastPort == NULL)
 		return;
