@@ -58,6 +58,14 @@ CTesterDlg::CTesterDlg(CWnd* pParent /*=NULL*/)
 	, m_word(_T(""))
 	, m_protocolType(0)
 	, update_interval(1000)
+	, m_IPFilter(FALSE)
+	, m_wordFilter(FALSE)
+	, m_sessionFilter(FALSE)
+	, m_portMonitor(FALSE)
+	, m_maxSession(0)
+	, m_nowSession(0)
+	, m_total(0)
+	, m_exceed(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -82,14 +90,15 @@ void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BWORD_ADD, m_bWordAdd);
 	DDX_Control(pDX, IDC_BWORD_DELETE, m_bWordDelete);
 	DDX_CBIndex(pDX, IDC_COMBO1, m_protocolType);
-	DDX_Check(pDX, IDC_CHECK_RULE, m_setting.IPFilter);
-	DDX_Check(pDX, IDC_CHECK_WORD, m_setting.WordFilter);
-	DDX_Check(pDX, IDC_CHECK_SESSION, m_setting.SessionMonitor);
-	DDX_Check(pDX, IDC_CHECK_MONITOR, m_setting.PortMonitor);
-	DDX_Text(pDX, IDC_EMAXSESSION, m_setting.MaxSession);
-	DDX_Text(pDX, IDC_ENOWSESSION, m_setting.NowSession);
+	DDX_Check(pDX, IDC_CHECK_RULE, m_IPFilter);
+	DDX_Check(pDX, IDC_CHECK_WORD, m_wordFilter);
+	DDX_Check(pDX, IDC_CHECK_SESSION, m_sessionFilter);
+	DDX_Check(pDX, IDC_CHECK_MONITOR, m_portMonitor);
 	DDX_Control(pDX, IDC_LIST_PORT, m_listPorts);
 	DDX_Control(pDX, IDC_CHART, m_chartCtrl);
+	DDX_Text(pDX, IDC_EMAXSESSION, m_maxSession);
+	DDX_Text(pDX, IDC_ENOWSESSION, m_nowSession);
+	DDX_Text(pDX, IDC_ETOTAL_USAGE, m_total);
 }
 
 BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
@@ -109,7 +118,6 @@ BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
 	ON_BN_CLICKED(IDC_CHECK_WORD, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_CHECK_SESSION, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_CHECK_MONITOR, &CTesterDlg::OnBnClickedCheck)
-	ON_BN_CLICKED(IDC_BUPDATE, &CTesterDlg::OnBnClickedBupdate)
 	ON_WM_TIMER()
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_PORT, &CTesterDlg::OnLvnItemchangedListPort)
 END_MESSAGE_MAP()
@@ -129,7 +137,7 @@ BOOL CTesterDlg::OnInitDialog()
 	m_myIP = GetLocalIP();
 	char ascii[256];
 	wcstombs( ascii, m_destIP, 256 );
-	m_setting.IP = inet_addr(ascii);
+	m_IP = inet_addr(ascii);
 
 	//we load the IPFilter Driver
 	filterDriver.LoadDriver(_T("IpFilterDriver"), _T("System32\\Drivers\\IpFltDrv.sys"), NULL, TRUE);
@@ -151,9 +159,6 @@ BOOL CTesterDlg::OnInitDialog()
 	m_listPorts.InsertColumn(order++,_T("Usage"), LVCFMT_LEFT, 90);
 	m_listPorts.InsertColumn(order++,_T("State"), LVCFMT_LEFT, 90);
 
-	helper.ReadIo(GET_SETTING, &m_setting, sizeof(FirewallSetting));
-	m_setting.MaxSession = 100;
-	m_setting.NowSession = 0;
 	m_portsManager.Init(&helper, &m_listPorts, &m_chartCtrl);
 
 	UpdateData(false);
@@ -338,28 +343,35 @@ void CTesterDlg::OnBnClickedBruleDelete()
 void CTesterDlg::OnBnClickedCheck()
 {
 	UpdateData();
-	DWORD result = helper.WriteIo(SET_SETTING, &m_setting, sizeof(FirewallSetting));
-	if(m_setting.PortMonitor)
+	SendSetting();
+	if(m_portMonitor)
 		SetTimer(100, update_interval, NULL);
 	UpdateData(false);
-}
-
-void CTesterDlg::OnBnClickedBupdate()
-{
-	int now = -1;
-	DWORD result = helper.ReadIo(GET_SETTING, &now, sizeof(int));
-	
 }
 
 void CTesterDlg::UpdatePorts()
 {
 	m_portsManager.Update();
+	m_nowSession = m_portsManager.SessionCount();
+	m_total = m_portsManager.GetTotal();
+	if(!m_exceed&&m_nowSession>m_maxSession)
+	{
+		m_exceed = true;
+		if(m_sessionFilter)
+			SendSetting();
+	}
+	else if(m_exceed&&m_nowSession<m_maxSession)
+	{
+		m_exceed = false;
+		if(m_sessionFilter)
+			SendSetting();
+	}
 }
 void CTesterDlg::OnTimer(UINT_PTR nIDEvent)
 {
-	// TODO: Add your message handler code here and/or call default
-	if (nIDEvent==100 && m_setting.PortMonitor)
+	if (nIDEvent==100 && m_portMonitor)
     {
+		UpdateData();
         SetTimer(100, update_interval, NULL);   // 타이머 다시 세팅..
 		UpdatePorts();
 		UpdateData(false);
@@ -372,4 +384,16 @@ void CTesterDlg::OnLvnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	m_portsManager.ChangeSelected(pNMLV->iItem);
 	*pResult = 0;
+}
+
+DWORD CTesterDlg::SendSetting()
+{
+	FirewallSetting setting;
+	setting.IP = m_IP;
+	setting.Exceed = m_exceed;
+	setting.IPFilter = m_IPFilter;
+	setting.PortMonitor = m_portMonitor;
+	setting.SessionFilter = m_sessionFilter;
+	setting.WordFilter = m_wordFilter;
+	return helper.WriteIo(SET_SETTING, &setting, sizeof(FirewallSetting));
 }

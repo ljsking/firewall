@@ -27,8 +27,6 @@ struct wordList *lastWord = NULL;
 struct portList *firstPort = NULL;
 struct portList *lastPort = NULL;
 unsigned int PacketLengthsum = 0;
-int NowSession = 0;
-int MaxSession = 100;
 FirewallSetting setting;
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
@@ -61,7 +59,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 
 		if ( !NT_SUCCESS(ntStatus) )
 		{
-			dprintf("myDriver.SYS: IoCreateSymbolicLink failed\n");
+			dprintf("MyDriver.SYS: IoCreateSymbolicLink failed\n");
 		}
 
 		//
@@ -76,7 +74,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 
 	if ( !NT_SUCCESS(ntStatus) )
 	{
-		dprintf("myDriver.SYS: Error in initialization. Unloading...");
+		dprintf("MyDriver.SYS: Error in initialization. Unloading...");
 
 		DrvUnload(DriverObject);
 	}
@@ -129,7 +127,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	switch (irpStack->MajorFunction)
 	{
 	case IRP_MJ_CREATE:
-		dprintf("DrvFltIp.SYS: IRP_MJ_CREATE\n");
+		dprintf("MyDriver.SYS: IRP_MJ_CREATE\n");
 		//SetFilterFunction(cbFilterFunction);
 		break;
 
@@ -138,12 +136,12 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		ClearFilterList();
 		ClearWordList();
 		ClearPortList();
-		dprintf("DrvFltIp.SYS: IRP_MJ_CLOSE\n");
+		dprintf("MyDriver.SYS: IRP_MJ_CLOSE\n");
 		break;
 
 	case IRP_MJ_DEVICE_CONTROL:
 		ioControlCode = irpStack->Parameters.DeviceIoControl.IoControlCode;
-		dprintf("DrvFltIp.SYS: IRP_MJ_DEVICE_CONTROL :%d\n", ioControlCode);
+		dprintf("MyDriver.SYS: IRP_MJ_DEVICE_CONTROL :%d\n", ioControlCode);
 
 		//memcpy(lpOutBuf, myTemp, nOutBufSize);
 		switch (ioControlCode)
@@ -151,31 +149,31 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			// ioctl code to start filtering
 		case START_IP_HOOK:
 			SetFilterFunction(cbFilterFunction);
-			dprintf("DrvFltIp.SYS: START_IP_HOOK\n");
+			dprintf("MyDriver.SYS: START_IP_HOOK\n");
 			break;
 
 			// ioctl to stop filtering
 		case STOP_IP_HOOK:
 			PacketLengthsum = 0;
 			SetFilterFunction(NULL);
-			dprintf("DrvFltIp.SYS: STOP_IP_HOOK\n");
+			dprintf("MyDriver.SYS: STOP_IP_HOOK\n");
 			break;
 
 			// ioctl to add a filter rule
 		case ADD_FILTER:
 			if(inputBufferLength == sizeof(IPFilter))
 			{
-				dprintf("DrvFltIp.SYS: ADD_FILTER\n");
+				dprintf("MyDriver.SYS: ADD_FILTER\n");
 				nf = (IPFilter *)ioBuffer;
 				AddFilterToList(nf);
 			}
 			break;
 
 		case ADD_WORD:
-			dprintf("DrvFltIp.SYS: ADD_WORD1 %d %d\n", inputBufferLength, sizeof(WordFilter));
+			dprintf("MyDriver.SYS: ADD_WORD1 %d %d\n", inputBufferLength, sizeof(WordFilter));
 			if(inputBufferLength == sizeof(WordFilter))
 			{
-				dprintf("DrvFltIp.SYS: ADD_WORD2\n");
+				dprintf("MyDriver.SYS: ADD_WORD2\n");
 				wf = (WordFilter *)ioBuffer;
 				AddWordToList(wf);
 			}
@@ -184,48 +182,45 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			// ioctl to free filter rule list
 		case CLEAR_FILTER:
 			ClearFilterList();
-			dprintf("DrvFltIp.SYS: CLEAR_FILTER\n");
+			dprintf("MyDriver.SYS: CLEAR_FILTER\n");
 			break;
 
 		case SET_SETTING:
-			dprintf("DrvFltIp.SYS: SET_SETTING %d %d\n", inputBufferLength, sizeof(FirewallSetting));
+			dprintf("MyDriver.SYS: SET_SETTING %d %d\n", inputBufferLength, sizeof(FirewallSetting));
 			if(inputBufferLength == sizeof(FirewallSetting))
 			{
 				fs = (FirewallSetting *)ioBuffer;
 				setting.IPFilter = fs->IPFilter;
-				setting.MaxSession = fs->MaxSession;
+				setting.Exceed = fs->Exceed;
 				setting.IP = fs->IP;
 				setting.PortMonitor = fs->PortMonitor;
-				setting.SessionMonitor = fs->SessionMonitor;
+				setting.SessionFilter = fs->SessionFilter;
 				setting.WordFilter = fs->WordFilter;
-				fs->MaxSession = 10;
-				dprintf("DrvFltIp.SYS: SET_SETTING\n");
+				dprintf("MyDriver.SYS: SET_SETTING\n");
 				//memcpy(&setting, ioBuffer, sizeof(FirewallSetting));
 			}
 			break;
 
-		case GET_SETTING:
-			dprintf("DrvFltIp.SYS: GET_SETTING %d %d\n", outputBufferLength, sizeof(int));
-			if(outputBufferLength == sizeof(int))
+		case GET_TOTAL:
+			dprintf("MyDriver.SYS: GET_SETTING %d %d\n", outputBufferLength, sizeof(int));
+			if(outputBufferLength == sizeof(ULONG))
 			{
-				dprintf("DrvFltIp.SYS: before GET_SETTING %d\n",*((int *)ioBuffer));
-				RtlCopyMemory(ioBuffer, &NowSession, sizeof(int));
-				Irp->IoStatus.Information = sizeof(int);
-				dprintf("DrvFltIp.SYS: GET_SETTING %d\n",*((int *)ioBuffer));
+				RtlCopyMemory(ioBuffer, &PacketLengthsum, sizeof(ULONG));
+				Irp->IoStatus.Information = sizeof(ULONG);
 			}
 			break;
 
 		case GET_PORTUSAGE:
-			dprintf("DrvFltIp.SYS: GET_PORTUSAGE %d %d %d %d\n", inputBufferLength, sizeof(USHORT), outputBufferLength, sizeof(ULONG));
+			dprintf("MyDriver.SYS: GET_PORTUSAGE %d %d %d %d\n", inputBufferLength, sizeof(USHORT), outputBufferLength, sizeof(ULONG));
 			if(outputBufferLength == sizeof(int) && inputBufferLength == sizeof(USHORT))
 			{
-				dprintf("DrvFltIp.SYS: GET_PORTUSAGE input: %u\n",*((USHORT *)ioBuffer));
+				dprintf("MyDriver.SYS: GET_PORTUSAGE input: %u\n",*((USHORT *)ioBuffer));
 				pl = FindPort(*((USHORT *)ioBuffer));
 				if(pl!=NULL)
 				{
 					RtlCopyMemory(ioBuffer, &(pl->pusage.usage), sizeof(ULONG));
 					Irp->IoStatus.Information = sizeof(ULONG);
-					dprintf("DrvFltIp.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
+					dprintf("MyDriver.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
 				}
 				
 			}
@@ -235,13 +230,13 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			if(inputBufferLength == sizeof(USHORT))
 			{
 				DeletePort(*((USHORT *)ioBuffer));
-				dprintf("DrvFltIp.SYS: DEL_PORT usage %d\n",*((USHORT *)ioBuffer));
+				dprintf("MyDriver.SYS: DEL_PORT usage %d\n",*((USHORT *)ioBuffer));
 			}
 			break;
 
 		default:
 			Irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
-			dprintf("DrvFltIp.SYS: unknown IRP_MJ_DEVICE_CONTROL\n");
+			dprintf("MyDriver.SYS: unknown IRP_MJ_DEVICE_CONTROL\n");
 			break;
 		}
 
@@ -285,7 +280,7 @@ VOID DrvUnload(IN PDRIVER_OBJECT DriverObject)
 {
     UNICODE_STRING         deviceLinkUnicodeString;
 
-	dprintf("DrvFltIp.SYS: Unloading\n");
+	dprintf("MyDriver.SYS: Unloading\n");
 
     SetFilterFunction(NULL);
 
@@ -328,7 +323,7 @@ NTSTATUS AddFilterToList(IPFilter *pf)
 
 	if(aux == NULL)
 	{
-		dprintf("Problem reserving memory\n");
+		dprintf("MyDriver.SYS: Problem reserving memory\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
@@ -358,7 +353,7 @@ NTSTATUS AddFilterToList(IPFilter *pf)
 		lastFilter->next = NULL;
 	}
 
-	dprintf("Rule Added2\n\t%x %x\n\t%x %x\n\t%x\n\t%x", aux->ipf.sourceIp
+	dprintf("MyDriver.SYS: Rule Added2\n\t%x %x\n\t%x %x\n\t%x\n\t%x", aux->ipf.sourceIp
 														, aux->ipf.sourceMask
 														, aux->ipf.destinationIp
 														, aux->ipf.destinationMask
@@ -393,7 +388,7 @@ NTSTATUS AddWordToList(WordFilter *wf)
 
 	if(aux == NULL)
 	{
-		dprintf("Problem reserving memory\n");
+		dprintf("MyDriver.SYS: Problem reserving memory\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
@@ -414,7 +409,7 @@ NTSTATUS AddWordToList(WordFilter *wf)
 		lastWord->next = NULL;
 	}
 
-	dprintf("Word Added\n\t%d %s\n", aux->wordf.id
+	dprintf("MyDriver.SYS: Word Added\n\t%d %s\n", aux->wordf.id
 									, aux->wordf.word);
 
 	return STATUS_SUCCESS;
@@ -451,7 +446,7 @@ NTSTATUS SetFilterFunction(PacketFilterExtensionPtr filterFunction)
 	IO_STATUS_BLOCK ioStatus;
 	PIRP irp;
 
-	dprintf("Getting pointer to IpFilterDriver\n");
+	dprintf("MyDriver.SYS: Getting pointer to IpFilterDriver\n");
 
 	//first of all, we have to get a pointer to IpFilterDriver Device
 	RtlInitUnicodeString(&filterName, DD_IPFLTRDRVR_DEVICE_NAME);
@@ -489,13 +484,13 @@ NTSTATUS SetFilterFunction(PacketFilterExtensionPtr filterFunction)
 				waitStatus = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
 
 				if (waitStatus 	!= STATUS_SUCCESS ) 
-					dprintf("Error waiting for IpFilterDriver response.");
+					dprintf("MyDriver.SYS: Error waiting for IpFilterDriver response.");
 			}
 
 			status = ioStatus.Status;
 
 			if(!NT_SUCCESS(status))
-				dprintf("Error, IO error with ipFilterDriver\n");
+				dprintf("MyDriver.SYS: Error, IO error with ipFilterDriver\n");
 		}
 
 		else
@@ -503,7 +498,7 @@ NTSTATUS SetFilterFunction(PacketFilterExtensionPtr filterFunction)
 			//if we cant allocate the space, we return the corresponding code error
 			status = STATUS_INSUFFICIENT_RESOURCES;
 
-			dprintf("Error building IpFilterDriver IRP\n");
+			dprintf("MyDriver.SYS: Error building IpFilterDriver IRP\n");
 		}
 
 		if(ipFileObject != NULL)
@@ -514,7 +509,7 @@ NTSTATUS SetFilterFunction(PacketFilterExtensionPtr filterFunction)
 	}
 
 	else
-		dprintf("Error while getting the pointer\n");
+		dprintf("MyDriver.SYS: Error while getting the pointer\n");
 
 	return status;
 }
@@ -542,7 +537,7 @@ int PortMonitoring(IPPacket *ipp, unsigned char *Packet, unsigned int PacketLeng
 		if(aux->pusage.port == port)
 		{
 			aux->pusage.usage+=PacketLength;
-			dprintf("Found it %d %d\n", port, aux->pusage.usage);
+			dprintf("MyDriver.SYS: Found it %d %d\n", port, aux->pusage.usage);
 			break;
 		}
 		aux = aux->next;
@@ -568,7 +563,7 @@ PF_FORWARD_ACTION FilterByWords(IPPacket *ipp, unsigned char *Packet)
 	{
 		if(strstr(Packet + sizeof(UDPHeader), aux->wordf.word) != NULL)
         {
-            dprintf("Detected word\n");
+            dprintf("MyDriver.SYS: Detected word\n");
             return PF_DROP;
         }
 		aux=aux->next;
@@ -593,7 +588,7 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
 		return PF_FORWARD;
 	while(aux != NULL)
 	{
-		dprintf("Comparing with Rule %d", countRule);
+		dprintf("MyDriver.SYS: Comparing with Rule %d", countRule);
 
 		//if protocol is the same....
 		if(aux->ipf.protocol == 0 || ipp->ipProtocol == aux->ipf.protocol)
@@ -621,13 +616,13 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
             if(ipp->ipProtocol == 6) 
 			{
                 tcph=(TCPHeader *)Packet; 
-                dprintf("티씨피입니다\n");
-                dprintf("%d     %d\n",tcph->sourcePort, aux->ipf.sourcePort);
+                dprintf("MyDriver.SYS: 티씨피입니다\n");
+                dprintf("MyDriver.SYS: %d     %d\n",tcph->sourcePort, aux->ipf.sourcePort);
 				if(aux->ipf.sourcePort == 0 || tcph->sourcePort == aux->ipf.sourcePort)
 				{ 
 					if(aux->ipf.destinationPort == 0 || tcph->destinationPort == aux->ipf.destinationPort) //puerto tcp destino
 					{
-                        dprintf("TCP Packet Drop\n");
+                        dprintf("MyDriver.SYS: TCP Packet Drop\n");
                         return  PF_DROP;
 					}
 				}
@@ -637,13 +632,13 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
 			else if(ipp->ipProtocol == 17) 
 			{
 				udph=(UDPHeader *)Packet; 
-                 dprintf("유디피입니다\n");
+                 dprintf("MyDriver.SYS: 유디피입니다\n");
 
 				if(aux->ipf.sourcePort == 0 || udph->sourcePort == aux->ipf.sourcePort) 
 				{ 
 					if(aux->ipf.destinationPort == 0 || udph->destinationPort == aux->ipf.destinationPort) 
 					{
-                        dprintf("UDP Packet Drop\n");
+                        dprintf("MyDriver.SYS: UDP Packet Drop\n");
                         return  PF_DROP;
 					}
 				}
@@ -665,9 +660,9 @@ Routine Description:
 --*/
 PF_FORWARD_ACTION FilterBySession(IPPacket *ipp, unsigned char *Packet)
 {
-	if(!setting.SessionMonitor)
+	if(!setting.SessionFilter)
 		return PF_FORWARD;
-	if( setting.SessionMonitor && ipp->ipProtocol == 6)
+	if( setting.SessionFilter && ipp->ipProtocol == 6)
 	{
 		TCPHeader *tcph=(TCPHeader *)Packet; 
 
@@ -675,22 +670,10 @@ PF_FORWARD_ACTION FilterBySession(IPPacket *ipp, unsigned char *Packet)
 		//if we havent the bit SYN activate, we pass the packets
 		if((tcph->flags == 0x02)) 
 		{
-			NowSession++;
-			dprintf("SYN FLAGS %d %d\n", NowSession, MaxSession);
-			if(NowSession>MaxSession)
-			{
-				NowSession = setting.MaxSession;
+			dprintf("MyDriver.SYS: SYN FLAGS drop\n");
+			if(setting.Exceed && setting.SessionFilter)
 				return PF_DROP;
-			}
 		}
-		else if((tcph->flags == 17) && (ipp->ipSource) == setting.IP)
-		{
-			NowSession--;
-			dprintf("FIN FLAGS %d %d %d\n", NowSession, tcph->flags, MaxSession);
-			if(NowSession<0)
-				NowSession = 0;
-		}
-
 	}
 	return PF_FORWARD;
 }
@@ -713,11 +696,11 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 	ipp=(IPPacket *)PacketHeader;
 	PacketLengthsum +=PacketLength;
 	if(setting.PortMonitor){
-		dprintf("Tama?: %x, %d", PacketLength, RecvInterfaceIndex);
-		dprintf("Source: %x\nDestination: %x\nProtocol: %d", ipp->ipSource, ipp->ipDestination, ipp->ipProtocol);
+		dprintf("MyDriver.SYS: Tama?: %x, %d", PacketLength, RecvInterfaceIndex);
+		dprintf("MyDriver.SYS: Source: %x\nDestination: %x\nProtocol: %d", ipp->ipSource, ipp->ipDestination, ipp->ipProtocol);
 
-		dprintf("PacketLength: %d", PacketLength);
-		dprintf("PacketLength 총 합: %d", PacketLengthsum);
+		dprintf("MyDriver.SYS: PacketLength: %d", PacketLength);
+		dprintf("MyDriver.SYS: PacketLength 총 합: %d", PacketLengthsum);
 	}
 	PortMonitoring(ipp, Packet, PacketLength);
 	rz = FilterBySession(ipp, Packet);
@@ -728,9 +711,9 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 	if(setting.PortMonitor)
 	{
 		if(rz == PF_FORWARD)
-			dprintf("Forward");
+			dprintf("MyDriver.SYS: Forward");
 		else
-			dprintf("Drop");
+			dprintf("MyDriver.SYS: Drop");
 	}
 	return rz;
 }
@@ -754,7 +737,7 @@ void ClearFilterList(void)
 	struct filterList *aux = NULL;
 
 	//free the linked list
-	dprintf("Removing the filter List...");
+	dprintf("MyDriver.SYS: Removing the filter List...");
 	
 	while(firstFilter != NULL)
 	{
@@ -762,12 +745,12 @@ void ClearFilterList(void)
 		firstFilter = firstFilter->next;
 		ExFreePool(aux);
 
-		dprintf("One Rule removed");
+		dprintf("MyDriver.SYS: One Rule removed");
 	}
 
 	firstFilter = lastFilter = NULL;
 
-	dprintf("Removed is complete.");
+	dprintf("MyDriver.SYS: Removed is complete.");
 }
 
 /*++
@@ -788,7 +771,7 @@ void ClearWordList(void)
 	struct wordList *aux = NULL;
 
 	//free the linked list
-	dprintf("Removing the word List...");
+	dprintf("MyDriver.SYS: Removing the word List...");
 	
 	while(firstWord != NULL)
 	{
@@ -796,12 +779,12 @@ void ClearWordList(void)
 		firstWord = firstWord->next;
 		ExFreePool(aux);
 
-		dprintf("One Word removed");
+		dprintf("MyDriver.SYS: One Word removed");
 	}
 
 	firstWord = lastWord = NULL;
 
-	dprintf("Removed is complete.");
+	dprintf("MyDriver.SYS: Removed is complete.");
 }
 
 /*++
@@ -823,13 +806,13 @@ PortList *FindPort(USHORT port)
 	struct portList *aux = firstPort;
 
 	//free the linked list
-	dprintf("Finding the port List...");
+	dprintf("MyDriver.SYS: Finding the port List...");
 	
 	while(aux != NULL)
 	{
 		if(aux->pusage.port == port)
 		{
-			dprintf("Found it");
+			dprintf("MyDriver.SYS: Found it");
 			break;
 		}
 		aux = aux->next;
@@ -840,7 +823,7 @@ PortList *FindPort(USHORT port)
 
 		if(aux == NULL)
 		{
-			dprintf("Problem reserving memory\n");
+			dprintf("MyDriver.SYS: Problem reserving memory\n");
 			return STATUS_INSUFFICIENT_RESOURCES;
 		}
 
@@ -861,7 +844,7 @@ PortList *FindPort(USHORT port)
 			lastPort->next = NULL;
 		}
 
-		dprintf("Port Added\t%d\n", aux->pusage.port);
+		dprintf("MyDriver.SYS: Port Added\t%d\n", aux->pusage.port);
 	}
 	return aux;
 }
@@ -884,7 +867,7 @@ void ClearPortList(void)
 	struct portList *aux = NULL;
 
 	//free the linked list
-	dprintf("Removing the port List...");
+	dprintf("MyDriver.SYS: Removing the port List...");
 	
 	while(firstPort != NULL)
 	{
@@ -892,12 +875,12 @@ void ClearPortList(void)
 		firstPort = firstPort->next;
 		ExFreePool(aux);
 
-		dprintf("One port removed");
+		dprintf("MyDriver.SYS: One port removed");
 	}
 
 	firstPort = lastPort = NULL;
 
-	dprintf("Removed is complete.");
+	dprintf("MyDriver.SYS: Removed is complete.");
 }
 
 /*++
@@ -919,7 +902,7 @@ void DeletePort(USHORT port)
 	struct portList *target = NULL;
 
 	//free the linked list
-	dprintf("Removing the port List...");
+	dprintf("MyDriver.SYS: Removing the port List...");
 	
 	if(firstPort == NULL || lastPort == NULL)
 		return;

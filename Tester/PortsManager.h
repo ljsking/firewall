@@ -7,6 +7,8 @@ public:
 	void Init(FilterHelper *helper, CListCtrl *list, CChartCtrl *chart);
 	void Update();
 	void ChangeSelected(int id);
+	int	SessionCount()const;
+	int GetTotal()const;
 private:
 	int GetPortFromList(int id);
 	PortSet GetNowPorts();
@@ -18,4 +20,5 @@ private:
 	CChartCtrl *m_chart;
 	TraceSet m_traces;
 	int m_selectedPort;
+	ULONG m_totalPacket;
 };

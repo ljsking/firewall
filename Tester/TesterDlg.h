@@ -20,6 +20,7 @@ protected:
 	BOOL AddFilter(IPFilter &pf);
 	BOOL AddWord(WordFilter &wf);
 	void UpdatePorts();
+	DWORD SendSetting();
 
 
 // 구현입니다.
@@ -43,7 +44,6 @@ protected:
 	afx_msg void OnLvnItemchangedListRule(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBruleDelete();
 	afx_msg void OnBnClickedCheck();
-	afx_msg void OnBnClickedBupdate();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnLvnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult);
 	
@@ -64,9 +64,17 @@ protected:
 	CButton m_bWordAdd;
 	CButton m_bWordDelete;
 	int m_protocolType;
-	FirewallSetting m_setting;
 	CListCtrl m_listPorts;
 	PortsManager m_portsManager;
 	const int update_interval;
 	CChartCtrl m_chartCtrl;
+	BOOL m_IPFilter;
+	BOOL m_wordFilter;
+	BOOL m_sessionFilter;
+	BOOL m_portMonitor;
+	bool m_exceed;
+	ULONG m_IP;
+	int m_maxSession;
+	int m_nowSession;
+	int m_total;
 };

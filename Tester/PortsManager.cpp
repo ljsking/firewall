@@ -103,6 +103,7 @@ void PortsManager::Update()
 		m_list->SetItem(i, 2, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
 	}
 	UpdateChart();
+	m_helper->ReadIo(GET_TOTAL, &m_totalPacket, sizeof(ULONG));
 }
 
 bool PortsManager::UpdatePort(PortSet::iterator &iter)
@@ -149,7 +150,6 @@ void PortsManager::ChangeSelected(int id)
 
 void PortsManager::UpdateChart()
 {
-	//m_chart->EnableRefresh(false);
 	m_chart->RemoveAllSeries();
 	CChartLineSerie* pLineSerie = dynamic_cast<CChartLineSerie*> (m_chart->AddSerie(CChartSerie::stLineSerie));
 	TraceSet::iterator it = m_traces.find(m_selectedPort);
@@ -164,5 +164,14 @@ void PortsManager::UpdateChart()
 	}
 	m_chart->GetLeftAxis()->SetMinMax(-10,y);
 	m_chart->GetBottomAxis()->SetMinMax(-1,x);
-	//m_chart->EnableRefresh(true);
+}
+
+int PortsManager::SessionCount()const
+{
+	return m_ports.size();
+}
+
+int PortsManager::GetTotal()const
+{
+	return m_totalPacket;
 }
