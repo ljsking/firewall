@@ -13,6 +13,7 @@
 #include "Tester.h"
 #include "Port.h"
 #include "PortsManager.h"
+#include "Chart\\ChartCtrl.h"
 #include "TesterDlg.h"
 
 #ifdef _DEBUG
@@ -87,6 +88,7 @@ void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EMAXSESSION, m_setting.MaxSession);
 	DDX_Text(pDX, IDC_ENOWSESSION, m_setting.NowSession);
 	DDX_Control(pDX, IDC_LIST_PORT, m_listPorts);
+	DDX_Control(pDX, IDC_CHART, m_ChartCtrl);
 }
 
 BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
@@ -152,6 +154,7 @@ BOOL CTesterDlg::OnInitDialog()
 	m_setting.MaxSession = 100;
 	m_setting.NowSession = 0;
 	m_portsManager.Init(&helper, &m_listPorts);
+
 	UpdateData(false);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.

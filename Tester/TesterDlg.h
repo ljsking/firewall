@@ -45,6 +45,7 @@ protected:
 	afx_msg void OnBnClickedCheck();
 	afx_msg void OnBnClickedBupdate();
 	afx_msg void OnHdnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	
 	CString m_myIP;
 	CButton m_bStart;
@@ -67,6 +68,5 @@ protected:
 	CListCtrl m_listPorts;
 	PortsManager m_portsManager;
 	const int update_interval;
-public:
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	CChartCtrl m_ChartCtrl;
 };

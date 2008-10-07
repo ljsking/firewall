@@ -27,10 +27,11 @@
 #define IDC_LIST_PORT                   1019
 #define IDC_EMAXSESSION                 1020
 #define IDC_ENOWSESSION                 1021
+#define IDC_CUSTOM1                     1022
+#define IDC_CHART                       1022
 #define IDC_CHECK_SESSION               1024
 #define IDC_CHECK_WORD                  1025
 #define IDC_CHECK_MONITOR               1026
-#define IDC_BUPDATE_PORT                1028
 #define IDC_ETOTAL_USAGE                1029
 
 // Next default values for new objects
@@ -39,7 +40,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        130
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1023
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

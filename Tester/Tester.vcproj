@@ -283,6 +283,66 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Chart"
+			>
+			<File
+				RelativePath=".\Chart\ChartAxis.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartAxisLabel.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartBarSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartCtrl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartGradient.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartGrid.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartLegend.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartLineSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartPointsSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartScrollBar.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartSurfaceSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartTitle.cpp"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"
 			>

@@ -6,6 +6,7 @@
 #include "..\\myDriver\\Filter.h"
 #include "Port.h"
 #include "PortsManager.h"
+#include "Chart\\ChartCtrl.h"
 #include "Tester.h"
 #include "TesterDlg.h"
 
