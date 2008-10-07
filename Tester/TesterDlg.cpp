@@ -8,7 +8,9 @@
 #include "TesterDlg.h"
 
 #include <winsock2.h>
+#include <iphlpapi.h>
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Iphlpapi.lib")
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -80,6 +82,7 @@ void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK_MONITOR, m_setting.PortMonitor);
 	DDX_Text(pDX, IDC_EMAXSESSION, m_setting.MaxSession);
 	DDX_Text(pDX, IDC_ENOWSESSION, m_setting.NowSession);
+	DDX_Control(pDX, IDC_LIST_PORT, m_listPorts);
 }
 
 BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
@@ -100,6 +103,7 @@ BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
 	ON_BN_CLICKED(IDC_CHECK_SESSION, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_CHECK_MONITOR, &CTesterDlg::OnBnClickedCheck)
 	ON_BN_CLICKED(IDC_BUPDATE, &CTesterDlg::OnBnClickedBupdate)
+	ON_NOTIFY(HDN_ITEMCHANGED, 0, &CTesterDlg::OnHdnItemchangedListPort)
 END_MESSAGE_MAP()
 
 
@@ -133,6 +137,11 @@ BOOL CTesterDlg::OnInitDialog()
 	m_listRules.InsertColumn(order++,_T("Dest IP"), LVCFMT_LEFT, 110);
 	m_listRules.InsertColumn(order++,_T("Mask"), LVCFMT_LEFT, 110);
 	m_listRules.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 80);
+
+	order = 0;
+	m_listPorts.InsertColumn(order++,_T("Port"), LVCFMT_LEFT, 80);
+	m_listPorts.InsertColumn(order++,_T("Usage"), LVCFMT_LEFT, 100);
+	m_listPorts.InsertColumn(order++,_T("State"), LVCFMT_LEFT, 100);
 
 	helper.ReadIo(GET_SETTING, &m_setting, sizeof(FirewallSetting));
 	m_setting.MaxSession = 100;
@@ -322,10 +331,66 @@ void CTesterDlg::OnBnClickedCheck()
 	DWORD result = helper.WriteIo(SET_SETTING, &m_setting, sizeof(FirewallSetting));
 	UpdateData(false);
 }
+
 void CTesterDlg::OnBnClickedBupdate()
 {
 	int now = -1;
 	DWORD result = helper.ReadIo(GET_SETTING, &now, sizeof(int));
 	TRACE("m_setting now %d, %d\n", now, m_setting.MaxSession);
+	UpdatePorts();
 	UpdateData(false);
+}
+
+void CTesterDlg::OnHdnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	*pResult = 0;
+}
+
+void CTesterDlg::UpdatePorts()
+{
+	m_listPorts.DeleteAllItems();
+	LVITEM item;
+	item.iItem = 0;
+	item.iSubItem = 1;
+	//item.pszText = _T("80");
+	//BOOL rz = m_listPorts.GetItem(&item);
+	GetPortInfomation();
+}
+
+void CTesterDlg::GetPortInfomation()
+{
+	DWORD i;
+	PMIB_TCPTABLE pTcpTable;
+	DWORD dwSize = 0;
+	DWORD dwRetVal = 0;
+
+	char *addr_ptr;
+	unsigned short *port_ptr;
+
+	/* Get size required by GetTcpTable() */
+	if (GetTcpTable(NULL, &dwSize, 0) == ERROR_INSUFFICIENT_BUFFER) {
+		pTcpTable = (MIB_TCPTABLE *) malloc (dwSize);
+	}
+
+	/* Get actual data using GetTcpTable() */
+	if ((dwRetVal = GetTcpTable(pTcpTable, &dwSize, 0)) == NO_ERROR) {
+		if (pTcpTable->dwNumEntries > 0) {
+			for (i=0; i<pTcpTable->dwNumEntries; i++) {
+				//addr_ptr = (char *)&pTcpTable->table[i].dwLocalAddr;
+				port_ptr = (unsigned short *)&pTcpTable->table[i].dwLocalPort;
+				//addr_ptr = (char *)&pTcpTable->table[i].dwRemoteAddr;
+				//port_ptr = (unsigned short *)&pTcpTable->table[i].dwRemotePort;
+				DWORD state = pTcpTable->table[i].dwState;
+				TCHAR buf[100];
+				wsprintf(buf, _T("%ld"), *port_ptr);
+				m_listPorts.InsertItem(1, buf);
+				wsprintf(buf, _T("%ld"), 0);
+				m_listPorts.SetItem(1, 1, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
+				wsprintf(buf, _T("%ld"), state);
+				m_listPorts.SetItem(1, 2, LVIF_TEXT, buf, 0, 0, 0, 0, 0);
+			}
+		}
+	}
+	free(pTcpTable);
 }

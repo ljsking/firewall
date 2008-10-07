@@ -3,6 +3,7 @@
 
 #pragma once
 #include "afxwin.h"
+#include "afxcmn.h"
 
 // CTesterDlg 대화 상자
 class CTesterDlg : public CDialog
@@ -18,6 +19,8 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 지원입니다.
 	BOOL AddFilter(IPFilter &pf);
 	BOOL AddWord(WordFilter &wf);
+	void UpdatePorts();
+	void GetPortInfomation();
 
 
 // 구현입니다.
@@ -41,6 +44,7 @@ protected:
 	afx_msg void OnLvnItemchangedListRule(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBruleDelete();
 	afx_msg void OnBnClickedCheck();
+	afx_msg void OnBnClickedBupdate();
 	
 	CString m_myIP;
 	CButton m_bStart;
@@ -60,6 +64,7 @@ protected:
 	CButton m_bWordDelete;
 	int m_protocolType;
 	FirewallSetting m_setting;
+	CListCtrl m_listPorts;
 public:
-	afx_msg void OnBnClickedBupdate();
+	afx_msg void OnHdnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult);
 };
