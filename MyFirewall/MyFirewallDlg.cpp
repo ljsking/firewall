@@ -8,46 +8,23 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Iphlpapi.lib")
 
-#include "FilterHelper.h"
+#include "DriverHelper.h"
 #include "..\\myDriver\\Filter.h"
-#include "Tester.h"
+#include "MyFirewall.h"
 #include "Port.h"
 #include "Chart\\ChartCtrl.h"
 #include "usagetrace.h"
 #include "PortsManager.h"
-#include "TesterDlg.h"
+#include "MyFirewallDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-CString GetLocalIP()        // local IP 획득
-{
-	WORD wVersionRequested;
-	WSADATA wsaData;
-	char name[255];
-	CString ip; // 여기에 lcoal ip가 저장됩니다.
-	PHOSTENT hostinfo;
-	wVersionRequested = MAKEWORD( 2, 0 );
+// CMyFirewallDlg 대화 상자
 
-	if ( WSAStartup( wVersionRequested, &wsaData ) == 0 )
-	{
-		if( gethostname ( name, sizeof(name)) == 0)
-		{
-			if((hostinfo = gethostbyname(name)) != NULL)
-			{
-				ip = inet_ntoa (*(struct in_addr *)*hostinfo->h_addr_list);
-			}
-		}      
-		WSACleanup( );
-	} 
-	return ip;
-}
-
-// CTesterDlg 대화 상자
-
-CTesterDlg::CTesterDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CTesterDlg::IDD, pParent)
+CMyFirewallDlg::CMyFirewallDlg(CWnd* pParent /*=NULL*/)
+	: CDialog(CMyFirewallDlg::IDD, pParent)
 	, m_myIP(_T("192.168.0.1"))
 	, m_sourceIP(_T("0"))
 	, m_sourceMask(_T("255.255.255.255"))
@@ -73,7 +50,7 @@ CTesterDlg::CTesterDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
-void CTesterDlg::DoDataExchange(CDataExchange* pDX)
+void CMyFirewallDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_MY_IP, m_myIP);
@@ -98,30 +75,30 @@ void CTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_ETOTAL_USAGE, m_total);
 }
 
-BEGIN_MESSAGE_MAP(CTesterDlg, CDialog)
+BEGIN_MESSAGE_MAP(CMyFirewallDlg, CDialog)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
-	ON_BN_CLICKED(IDC_BSTART, &CTesterDlg::OnBnClickedBStart)
-	ON_BN_CLICKED(IDC_BSTOP, &CTesterDlg::OnBnClickedBStop)
-	ON_BN_CLICKED(IDC_BRULE_ADD, &CTesterDlg::OnBnClickedBRuleAdd)
-	ON_BN_CLICKED(IDC_BWORD_ADD, &CTesterDlg::OnBnClickedBwordAdd)
-	ON_BN_CLICKED(IDC_BRULE_DELETE, &CTesterDlg::OnBnClickedBruleDelete)
-	ON_BN_CLICKED(IDC_BWORD_DELETE, &CTesterDlg::OnBnClickedBwordDelete)
-	ON_BN_CLICKED(IDC_CHECK_RULE, &CTesterDlg::OnBnClickedCheck)
-	ON_BN_CLICKED(IDC_CHECK_WORD, &CTesterDlg::OnBnClickedCheck)
-	ON_BN_CLICKED(IDC_CHECK_SESSION, &CTesterDlg::OnBnClickedCheck)
-	ON_BN_CLICKED(IDC_CHECK_MONITOR, &CTesterDlg::OnBnClickedCheck)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_RULE, &CTesterDlg::OnLvnItemchangedListRule)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_WORD, &CTesterDlg::OnLvnItemchangedListWord)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_PORT, &CTesterDlg::OnLvnItemchangedListPort)
+	ON_BN_CLICKED(IDC_BSTART, &CMyFirewallDlg::OnBnClickedBStart)
+	ON_BN_CLICKED(IDC_BSTOP, &CMyFirewallDlg::OnBnClickedBStop)
+	ON_BN_CLICKED(IDC_BRULE_ADD, &CMyFirewallDlg::OnBnClickedBRuleAdd)
+	ON_BN_CLICKED(IDC_BWORD_ADD, &CMyFirewallDlg::OnBnClickedBwordAdd)
+	ON_BN_CLICKED(IDC_BRULE_DELETE, &CMyFirewallDlg::OnBnClickedBruleDelete)
+	ON_BN_CLICKED(IDC_BWORD_DELETE, &CMyFirewallDlg::OnBnClickedBwordDelete)
+	ON_BN_CLICKED(IDC_CHECK_RULE, &CMyFirewallDlg::OnBnClickedCheck)
+	ON_BN_CLICKED(IDC_CHECK_WORD, &CMyFirewallDlg::OnBnClickedCheck)
+	ON_BN_CLICKED(IDC_CHECK_SESSION, &CMyFirewallDlg::OnBnClickedCheck)
+	ON_BN_CLICKED(IDC_CHECK_MONITOR, &CMyFirewallDlg::OnBnClickedCheck)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_RULE, &CMyFirewallDlg::OnLvnItemchangedListRule)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_WORD, &CMyFirewallDlg::OnLvnItemchangedListWord)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_PORT, &CMyFirewallDlg::OnLvnItemchangedListPort)
 	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
-// CTesterDlg 메시지 처리기
+// CMyFirewallDlg 메시지 처리기
 
-BOOL CTesterDlg::OnInitDialog()
+BOOL CMyFirewallDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
@@ -130,7 +107,7 @@ BOOL CTesterDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-	m_myIP = GetLocalIP();
+	GetLocalIP();
 	char ascii[256];
 	wcstombs( ascii, m_destIP, 256 );
 	m_IP = inet_addr(ascii);
@@ -139,7 +116,7 @@ BOOL CTesterDlg::OnInitDialog()
 	filterDriver.LoadDriver(_T("IpFilterDriver"), _T("System32\\Drivers\\IpFltDrv.sys"), NULL, TRUE);
 	//we don't deregister the driver at destructor
 	filterDriver.SetRemovable(FALSE);
-	helper.LoadDriver(_T("MyDriver"), NULL, NULL, TRUE);
+	helper.LoadDriver(_T("MyDriver"), _T("c:\\MyDriver.sys"), NULL, TRUE);
 
 	int order = 0;
 	m_listRules.InsertColumn(order++,_T("Protocol"), LVCFMT_LEFT, 90);
@@ -169,7 +146,7 @@ BOOL CTesterDlg::OnInitDialog()
 //  아래 코드가 필요합니다. 문서/뷰 모델을 사용하는 MFC 응용 프로그램의 경우에는
 //  프레임워크에서 이 작업을 자동으로 수행합니다.
 
-void CTesterDlg::OnPaint()
+void CMyFirewallDlg::OnPaint()
 {
 	if (IsIconic())
 	{
@@ -196,13 +173,13 @@ void CTesterDlg::OnPaint()
 
 // 사용자가 최소화된 창을 끄는 동안에 커서가 표시되도록 시스템에서
 //  이 함수를 호출합니다.
-HCURSOR CTesterDlg::OnQueryDragIcon()
+HCURSOR CMyFirewallDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
 
-void CTesterDlg::OnBnClickedBStart()
+void CMyFirewallDlg::OnBnClickedBStart()
 {
 	m_started = true;
 	GetDlgItem(IDC_BSTART)->EnableWindow(0);
@@ -216,7 +193,7 @@ void CTesterDlg::OnBnClickedBStart()
 	helper.WriteIo(START_IP_HOOK, NULL, 0);
 }
 
-void CTesterDlg::OnBnClickedBStop()
+void CMyFirewallDlg::OnBnClickedBStop()
 {
 	m_started = false;
 	GetDlgItem(IDC_BSTART)->EnableWindow(1);
@@ -232,7 +209,7 @@ void CTesterDlg::OnBnClickedBStop()
 	helper.WriteIo(STOP_IP_HOOK, NULL, 0);
 }
 
-void CTesterDlg::OnBnClickedBRuleAdd()
+void CMyFirewallDlg::OnBnClickedBRuleAdd()
 {
 	UpdateData();
 
@@ -279,7 +256,7 @@ void CTesterDlg::OnBnClickedBRuleAdd()
 	}
 }
 
-BOOL CTesterDlg::AddFilter(IPFilter &pf)
+BOOL CMyFirewallDlg::AddFilter(IPFilter &pf)
 {
 	DWORD result = helper.WriteIo(ADD_FILTER, &pf, sizeof(pf));
 
@@ -289,7 +266,7 @@ BOOL CTesterDlg::AddFilter(IPFilter &pf)
 		return TRUE;
 }
 
-BOOL CTesterDlg::AddWord(WordFilter &wf)
+BOOL CMyFirewallDlg::AddWord(WordFilter &wf)
 {
 	DWORD result = helper.WriteIo(ADD_WORD, &wf, sizeof(WordFilter));
 
@@ -299,7 +276,7 @@ BOOL CTesterDlg::AddWord(WordFilter &wf)
 		return TRUE;
 }
 
-void CTesterDlg::OnBnClickedBwordAdd()
+void CMyFirewallDlg::OnBnClickedBwordAdd()
 {
 	UpdateData();
 	WordFilter wf;
@@ -313,14 +290,14 @@ void CTesterDlg::OnBnClickedBwordAdd()
 	UpdateData(false);
 }
 
-void CTesterDlg::OnLvnItemchangedListWord(NMHDR *pNMHDR, LRESULT *pResult)
+void CMyFirewallDlg::OnLvnItemchangedListWord(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	GetDlgItem(IDC_BWORD_DELETE)->EnableWindow(1);
 	*pResult = 0;
 }
 
-void CTesterDlg::OnBnClickedBwordDelete()
+void CMyFirewallDlg::OnBnClickedBwordDelete()
 {
 	POSITION pos = m_listWords.GetFirstSelectedItemPosition();
 	while (pos)
@@ -334,14 +311,14 @@ void CTesterDlg::OnBnClickedBwordDelete()
 	}
 }
 
-void CTesterDlg::OnLvnItemchangedListRule(NMHDR *pNMHDR, LRESULT *pResult)
+void CMyFirewallDlg::OnLvnItemchangedListRule(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	GetDlgItem(IDC_BRULE_DELETE)->EnableWindow(1);
 	*pResult = 0;
 }
 
-void CTesterDlg::OnBnClickedBruleDelete()
+void CMyFirewallDlg::OnBnClickedBruleDelete()
 {
 	POSITION pos = m_listRules.GetFirstSelectedItemPosition();
 	while (pos)
@@ -355,7 +332,7 @@ void CTesterDlg::OnBnClickedBruleDelete()
 	}
 }
 
-void CTesterDlg::OnBnClickedCheck()
+void CMyFirewallDlg::OnBnClickedCheck()
 {
 	UpdateData();
 	SendSetting();
@@ -364,7 +341,7 @@ void CTesterDlg::OnBnClickedCheck()
 	UpdateData(false);
 }
 
-void CTesterDlg::UpdatePorts()
+void CMyFirewallDlg::UpdatePorts()
 {
 	m_portsManager.Update();
 	m_nowSession = m_portsManager.SessionCount();
@@ -382,7 +359,7 @@ void CTesterDlg::UpdatePorts()
 			SendSetting();
 	}
 }
-void CTesterDlg::OnTimer(UINT_PTR nIDEvent)
+void CMyFirewallDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	if (m_started && nIDEvent==100 && m_portMonitor)
     {
@@ -394,14 +371,14 @@ void CTesterDlg::OnTimer(UINT_PTR nIDEvent)
 	CDialog::OnTimer(nIDEvent);
 }
 
-void CTesterDlg::OnLvnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult)
+void CMyFirewallDlg::OnLvnItemchangedListPort(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	m_portsManager.ChangeSelected(pNMLV->iItem);
 	*pResult = 0;
 }
 
-DWORD CTesterDlg::SendSetting()
+DWORD CMyFirewallDlg::SendSetting()
 {
 	FirewallSetting setting;
 	setting.IP = m_IP;
@@ -411,4 +388,25 @@ DWORD CTesterDlg::SendSetting()
 	setting.SessionFilter = m_sessionFilter;
 	setting.WordFilter = m_wordFilter;
 	return helper.WriteIo(SET_SETTING, &setting, sizeof(FirewallSetting));
+}
+
+void CMyFirewallDlg::GetLocalIP()        // local IP 획득
+{
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	char name[255];
+	PHOSTENT hostinfo;
+	wVersionRequested = MAKEWORD( 2, 0 );
+
+	if ( WSAStartup( wVersionRequested, &wsaData ) == 0 )
+	{
+		if( gethostname ( name, sizeof(name)) == 0)
+		{
+			if((hostinfo = gethostbyname(name)) != NULL)
+			{
+				m_myIP = inet_ntoa (*(struct in_addr *)*hostinfo->h_addr_list);
+			}
+		}      
+		WSACleanup();
+	} 
 }

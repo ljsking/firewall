@@ -6,8 +6,7 @@
 #pragma comment(lib, "Iphlpapi.lib")
 
 #include "port.h"
-#include "filterhelper.h"
-#include "filterhelper.h"
+#include "DriverHelper.h"
 #include "..\\myDriver\\Filter.h"
 #include "Chart\\ChartCtrl.h"
 #include "Chart\\ChartLineSerie.h"
@@ -17,7 +16,7 @@
 PortsManager::PortsManager()
 {
 }
-void PortsManager::Init(FilterHelper *helper, CListCtrl *list, CChartCtrl *chart)
+void PortsManager::Init(DriverHelper *helper, CListCtrl *list, CChartCtrl *chart)
 {
 	m_helper = helper;
 	m_list = list;

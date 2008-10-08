@@ -5,12 +5,12 @@
 #include "afxwin.h"
 #include "afxcmn.h"
 
-// CTesterDlg 대화 상자
-class CTesterDlg : public CDialog
+// CMyFirewallDlg 대화 상자
+class CMyFirewallDlg : public CDialog
 {
 // 생성입니다.
 public:
-	CTesterDlg(CWnd* pParent = NULL);	// 표준 생성자입니다.
+	CMyFirewallDlg(CWnd* pParent = NULL);	// 표준 생성자입니다.
 
 // 대화 상자 데이터입니다.
 	enum { IDD = IDD_TESTER_DIALOG };
@@ -21,13 +21,14 @@ protected:
 	BOOL AddWord(WordFilter &wf);
 	void UpdatePorts();
 	DWORD SendSetting();
+	void GetLocalIP();
 
 
 // 구현입니다.
 protected:
 	HICON m_hIcon;
-	FilterHelper helper;
-	FilterHelper filterDriver;
+	DriverHelper helper;
+	DriverHelper filterDriver;
 
 	// 생성된 메시지 맵 함수
 	virtual BOOL OnInitDialog();

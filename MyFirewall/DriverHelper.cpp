@@ -4,13 +4,13 @@
 //of file while looking for precompiled header
 
 #include "stdafx.h"
-#include "FilterHelper.h"
+#include "DriverHelper.h"
 #include "winsvc.h"
 
 
 
 //Constructor. Initialize variables.
-FilterHelper::FilterHelper(void)
+DriverHelper::DriverHelper(void)
 {
 	driverHandle = NULL;
 	   
@@ -27,7 +27,7 @@ FilterHelper::FilterHelper(void)
 
 
 //Destructor. Free resources and unload the driver.
-FilterHelper::~FilterHelper(void)
+DriverHelper::~DriverHelper(void)
 {
 	if(driverHandle != NULL)
 	{
@@ -39,33 +39,33 @@ FilterHelper::~FilterHelper(void)
 }
 
 //If removable = TRUE, the driver isnt unload when exit
-void FilterHelper::SetRemovable(BOOL value)
+void DriverHelper::SetRemovable(BOOL value)
 {
 	removable = value;
 }
 
 
 //is driver initialized?
-BOOL FilterHelper::IsInitialized(void)
+BOOL DriverHelper::IsInitialized(void)
 {
 	return initialized;
 }
 
 //is driver loaded?
-BOOL FilterHelper::IsLoaded(void)
+BOOL DriverHelper::IsLoaded(void)
 {
 	return loaded;
 }
 
 //is driver started?
-BOOL FilterHelper::IsStarted(void)
+BOOL DriverHelper::IsStarted(void)
 {
 	return started;
 }
 
 
 //Init the driver class variables
-DWORD FilterHelper::InitDriver(LPCTSTR path)
+DWORD DriverHelper::InitDriver(LPCTSTR path)
 {
 	//if already initialized, first unload
 	if(initialized)
@@ -140,7 +140,7 @@ DWORD FilterHelper::InitDriver(LPCTSTR path)
 
 
 //Init the driver class variables
-DWORD FilterHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
+DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 {	
 	//if already initialized, first unload
 	if(initialized)
@@ -312,7 +312,7 @@ DWORD FilterHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 
 
 //Function to Load the driver.
-DWORD FilterHelper::LoadDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName, BOOL start)
+DWORD DriverHelper::LoadDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName, BOOL start)
 {
 	//first initialized it
 	DWORD retCode = InitDriver(name, path, dosName);
@@ -325,7 +325,7 @@ DWORD FilterHelper::LoadDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName, BOOL
 }
 
 //Function to load the driver
-DWORD FilterHelper::LoadDriver(LPCTSTR path, BOOL start)
+DWORD DriverHelper::LoadDriver(LPCTSTR path, BOOL start)
 {
 	//first initialized it
 	DWORD retCode = InitDriver(path);
@@ -339,7 +339,7 @@ DWORD FilterHelper::LoadDriver(LPCTSTR path, BOOL start)
 
 
 //Function to Load the driver
-DWORD FilterHelper::LoadDriver(BOOL start)
+DWORD DriverHelper::LoadDriver(BOOL start)
 {
 	//if the driver is already started, i havent to do nothing
 	if(loaded)
@@ -402,7 +402,7 @@ DWORD FilterHelper::LoadDriver(BOOL start)
 
 
 //Function to Unload a driver
-DWORD FilterHelper::UnloadDriver(BOOL forceClearData)
+DWORD DriverHelper::UnloadDriver(BOOL forceClearData)
 {
 	DWORD retCode = DRV_SUCCESS;
 
@@ -484,7 +484,7 @@ DWORD FilterHelper::UnloadDriver(BOOL forceClearData)
 
 
 //Function to start the driver "service"
-DWORD FilterHelper::StartDriver(void)
+DWORD DriverHelper::StartDriver(void)
 {
 	//if already started, all ok
 	if(started)
@@ -544,7 +544,7 @@ DWORD FilterHelper::StartDriver(void)
 
 
 //Function to stop driver "service"
-DWORD FilterHelper::StopDriver(void)
+DWORD DriverHelper::StopDriver(void)
 {
 	//if already stopped, all ok
 	if(!started)
@@ -594,7 +594,7 @@ DWORD FilterHelper::StopDriver(void)
 
 
 //Funtion to open a driver handle
-DWORD FilterHelper::OpenDevice(void)
+DWORD DriverHelper::OpenDevice(void)
 {
 	//if i already have a handle, first close it
 	if (driverHandle != NULL) 
@@ -617,14 +617,14 @@ DWORD FilterHelper::OpenDevice(void)
 
 
 //Return the driverHandle obtained
-HANDLE FilterHelper::GetDriverHandle(void)
+HANDLE DriverHelper::GetDriverHandle(void)
 {
 	return driverHandle;
 }
 
 
 //Funtion to send data to the driver
-DWORD FilterHelper::WriteIo(DWORD code, PVOID buffer, DWORD count)
+DWORD DriverHelper::WriteIo(DWORD code, PVOID buffer, DWORD count)
 {
 	if(driverHandle == NULL)
 		return DRV_ERROR_INVALID_HANDLE;
@@ -648,7 +648,7 @@ DWORD FilterHelper::WriteIo(DWORD code, PVOID buffer, DWORD count)
 
 
 //Functions to read data from the driver
-DWORD FilterHelper::ReadIo(DWORD code, PVOID buffer, DWORD count)
+DWORD DriverHelper::ReadIo(DWORD code, PVOID buffer, DWORD count)
 {
 	if(driverHandle == NULL)
 		return DRV_ERROR_INVALID_HANDLE;
@@ -671,7 +671,7 @@ DWORD FilterHelper::ReadIo(DWORD code, PVOID buffer, DWORD count)
 
 
 //Function to do IO operation with the driver, read or write or both
-DWORD FilterHelper::RawIo(DWORD code, PVOID inBuffer, DWORD inCount, PVOID outBuffer, DWORD outCount)
+DWORD DriverHelper::RawIo(DWORD code, PVOID inBuffer, DWORD inCount, PVOID outBuffer, DWORD outCount)
 {
 	if(driverHandle == NULL)
 		return DRV_ERROR_INVALID_HANDLE;

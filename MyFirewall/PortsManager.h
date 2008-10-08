@@ -4,7 +4,7 @@ class PortsManager
 {
 public:
 	PortsManager();
-	void Init(FilterHelper *helper, CListCtrl *list, CChartCtrl *chart);
+	void Init(DriverHelper *helper, CListCtrl *list, CChartCtrl *chart);
 	void Update();
 	void ChangeSelected(int id);
 	int	SessionCount()const;
@@ -15,7 +15,7 @@ private:
 	bool UpdatePort(PortSet::iterator &iter);
 	void UpdateChart();
 	PortSet m_ports;
-	FilterHelper *m_helper;
+	DriverHelper *m_helper;
 	CListCtrl *m_list;
 	CChartCtrl *m_chart;
 	TraceSet m_traces;

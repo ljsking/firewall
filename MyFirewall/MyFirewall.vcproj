@@ -2,8 +2,10 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="MyFirewall"
-	ProjectGUID="{DF12615F-7BB5-4BF1-9695-8E9522D23553}"
+	Name="Tester"
+	ProjectGUID="{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}"
+	RootNamespace="Tester"
+	Keyword="MFCProj"
 	>
 	<Platforms>
 		<Platform
@@ -18,6 +20,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
+			UseOfMFC="2"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -33,21 +37,40 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="false"
+				ValidateParameters="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="0"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				UsePrecompiledHeader="2"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1042"
+				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				LinkIncremental="2"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -72,11 +95,17 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;..\MyDriver\objchk_wlh_x86\i386\MyDriver.sys&quot; &quot;.\&quot;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
+			UseOfMFC="2"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -92,21 +121,40 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="false"
+				ValidateParameters="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
+				MinimalRebuild="false"
+				RuntimeLibrary="2"
+				UsePrecompiledHeader="2"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1042"
+				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				LinkIncremental="1"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -142,20 +190,176 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
+			<File
+				RelativePath=".\DriverHelper.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MyFirewall.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MyFirewallDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Port.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PortsManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\stdafx.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\UsageTrace.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\DriverHelper.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MyFIrewall.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MyFirewallDlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Port.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PortsManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UsageTrace.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+			<File
+				RelativePath=".\res\Tester.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\Tester.rc"
+				>
+			</File>
+			<File
+				RelativePath=".\res\Tester.rc2"
+				>
+			</File>
 		</Filter>
+		<Filter
+			Name="Chart"
+			>
+			<File
+				RelativePath=".\Chart\ChartAxis.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartAxisLabel.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartBarSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartCtrl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartGradient.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartGrid.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartLegend.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartLineSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartPointsSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartScrollBar.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartSurfaceSerie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Chart\ChartTitle.cpp"
+				>
+			</File>
+		</Filter>
+		<File
+			RelativePath=".\ReadMe.txt"
+			>
+		</File>
 	</Files>
 	<Globals>
+		<Global
+			Name="RESOURCE_FILE"
+			Value="Tester.rc"
+		/>
 	</Globals>
 </VisualStudioProject>

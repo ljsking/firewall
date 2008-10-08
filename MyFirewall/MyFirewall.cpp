@@ -2,44 +2,44 @@
 //
 
 #include "stdafx.h"
-#include "FilterHelper.h"
+#include "DriverHelper.h"
 #include "..\\myDriver\\Filter.h"
 #include "Port.h"
 #include "Chart\\ChartCtrl.h"
 #include "usagetrace.h"
 #include "PortsManager.h"
-#include "Tester.h"
-#include "TesterDlg.h"
+#include "MyFirewall.h"
+#include "MyFirewallDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
-// CTesterApp
+// CMyFirewallApp
 
-BEGIN_MESSAGE_MAP(CTesterApp, CWinApp)
+BEGIN_MESSAGE_MAP(CMyFirewallApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
 
-// CTesterApp 생성
+// CMyFirewallApp 생성
 
-CTesterApp::CTesterApp()
+CMyFirewallApp::CMyFirewallApp()
 {
 	// TODO: 여기에 생성 코드를 추가합니다.
 	// InitInstance에 모든 중요한 초기화 작업을 배치합니다.
 }
 
 
-// 유일한 CTesterApp 개체입니다.
+// 유일한 CMyFirewallApp 개체입니다.
 
-CTesterApp theApp;
+CMyFirewallApp theApp;
 
 
-// CTesterApp 초기화
+// CMyFirewallApp 초기화
 
-BOOL CTesterApp::InitInstance()
+BOOL CMyFirewallApp::InitInstance()
 {
 	// 응용 프로그램 매니페스트가 ComCtl32.dll 버전 6 이상을 사용하여 비주얼 스타일을
 	// 사용하도록 지정하는 경우, Windows XP 상에서 반드시 InitCommonControlsEx()가 필요합니다.
@@ -64,7 +64,7 @@ BOOL CTesterApp::InitInstance()
 	// 적절한 내용으로 수정해야 합니다.
 	SetRegistryKey(_T("로컬 응용 프로그램 마법사에서 생성된 응용 프로그램"));
 
-	CTesterDlg dlg;
+	CMyFirewallDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

@@ -17,11 +17,11 @@
 #define DRV_ERROR_NULL_POINTER			 (DWORD)-12		//ERROR, pointer introduced is NULL
 #define DRV_ERROR_UNKNOWN				 (DWORD)-13		//UNKNOWN ERROR
 
-class FilterHelper
+class DriverHelper
 {
 public:
-	FilterHelper(void);		//constructor
-	~FilterHelper(void);		//destructor
+	DriverHelper(void);		//constructor
+	~DriverHelper(void);		//destructor
 
 	//functions to initialized the driver variables
 	DWORD InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName=NULL);

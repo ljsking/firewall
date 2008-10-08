@@ -10,14 +10,14 @@
 #include "resource.h"		// 주 기호입니다.
 
 
-// CTesterApp:
-// 이 클래스의 구현에 대해서는 Tester.cpp을 참조하십시오.
+// MyFirewall:
+// 이 클래스의 구현에 대해서는 MyFirewall.cpp을 참조하십시오.
 //
 
-class CTesterApp : public CWinApp
+class CMyFirewallApp : public CWinApp
 {
 public:
-	CTesterApp();
+	CMyFirewallApp();
 
 // 재정의입니다.
 	public:
@@ -28,4 +28,4 @@ public:
 	DECLARE_MESSAGE_MAP()
 };
 
-extern CTesterApp theApp;
+extern CMyFirewallApp theApp;

@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MyFirewall", "MyFirewall\MyFirewall.vcproj", "{DF12615F-7BB5-4BF1-9695-8E9522D23553}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myDriver", "MyDriver\myDriver.vcproj", "{B276EFE6-1FAA-4390-918D-F89868A3F233}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tester", "Tester\Tester.vcproj", "{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MyDriver", "MyDriver\myDriver.vcproj", "{B276EFE6-1FAA-4390-918D-F89868A3F233}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirewallInstaller", "FirewallInstaller\FirewallInstaller.vcproj", "{E1F5B30D-3C86-4B32-9706-F1F8C92C8155}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tester", "MyFirewall\MyFirewall.vcproj", "{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,22 +13,18 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DF12615F-7BB5-4BF1-9695-8E9522D23553}.Debug|Win32.ActiveCfg = Debug|Win32
-		{DF12615F-7BB5-4BF1-9695-8E9522D23553}.Debug|Win32.Build.0 = Debug|Win32
-		{DF12615F-7BB5-4BF1-9695-8E9522D23553}.Release|Win32.ActiveCfg = Release|Win32
-		{DF12615F-7BB5-4BF1-9695-8E9522D23553}.Release|Win32.Build.0 = Release|Win32
 		{B276EFE6-1FAA-4390-918D-F89868A3F233}.Debug|Win32.ActiveCfg = Debug|Win32
 		{B276EFE6-1FAA-4390-918D-F89868A3F233}.Debug|Win32.Build.0 = Debug|Win32
 		{B276EFE6-1FAA-4390-918D-F89868A3F233}.Release|Win32.ActiveCfg = Release|Win32
 		{B276EFE6-1FAA-4390-918D-F89868A3F233}.Release|Win32.Build.0 = Release|Win32
-		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Debug|Win32.ActiveCfg = Debug|Win32
-		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Debug|Win32.Build.0 = Debug|Win32
-		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Release|Win32.ActiveCfg = Release|Win32
-		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Release|Win32.Build.0 = Release|Win32
 		{E1F5B30D-3C86-4B32-9706-F1F8C92C8155}.Debug|Win32.ActiveCfg = Debug|Win32
 		{E1F5B30D-3C86-4B32-9706-F1F8C92C8155}.Debug|Win32.Build.0 = Debug|Win32
 		{E1F5B30D-3C86-4B32-9706-F1F8C92C8155}.Release|Win32.ActiveCfg = Release|Win32
 		{E1F5B30D-3C86-4B32-9706-F1F8C92C8155}.Release|Win32.Build.0 = Release|Win32
+		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Debug|Win32.Build.0 = Debug|Win32
+		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Release|Win32.ActiveCfg = Release|Win32
+		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
