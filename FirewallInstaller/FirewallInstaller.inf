@@ -54,5 +54,5 @@ file-win32-x86=thiscab
 ; *** add your controls CLSID here ***
 clsid={71CBE562-FCAE-4CEA-A153-837B8E20A31C}
 ; Add your ocx's file version here.
-FileVersion=1,0,0,1
+FileVersion=1,0,0,2
 RegisterServer=yes

