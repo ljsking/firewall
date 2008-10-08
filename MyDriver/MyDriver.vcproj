@@ -4,7 +4,7 @@
 	Version="8.00"
 	Name="MyDriver"
 	ProjectGUID="{B276EFE6-1FAA-4390-918D-F89868A3F233}"
-	RootNamespace="myDriver"
+	RootNamespace="MyDriver"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>

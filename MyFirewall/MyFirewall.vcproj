@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="Tester"
+	Name="MyFirewall"
 	ProjectGUID="{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}"
-	RootNamespace="Tester"
+	RootNamespace="MyFirewall"
 	Keyword="MFCProj"
 	>
 	<Platforms>
@@ -279,15 +279,15 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\res\Tester.ico"
+				RelativePath=".\res\MyFirewall.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\Tester.rc"
+				RelativePath=".\MyFirewall.rc"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Tester.rc2"
+				RelativePath=".\res\MyFirewall.rc2"
 				>
 			</File>
 		</Filter>

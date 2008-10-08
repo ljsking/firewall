@@ -64,7 +64,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\Tester.ico"
+IDR_MAINFRAME           ICON                    "res\\MyFirewall.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -214,7 +214,7 @@ END
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
 LANGUAGE 18, 1
 #pragma code_page(949)
-#include "res\Tester.rc2"  // Microsoft Visual C++ 이외의 다른 도구에서 편집한 리소스입니다.
+#include "res\MyFirewall.rc2"  // Microsoft Visual C++ 이외의 다른 도구에서 편집한 리소스입니다.
 #include "afxres.rc"     // 표준 구성 요소입니다.
 #endif
 
