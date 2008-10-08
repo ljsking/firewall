@@ -1,0 +1,50 @@
+// FirewallInstaller.idl : type library source for ActiveX Control project.
+
+// This file will be processed by the MIDL compiler tool to
+// produce the type library (FirewallInstaller.tlb) that will become a resource in
+// FirewallInstaller.ocx.
+
+#include <olectl.h>
+#include <idispids.h>
+
+[ uuid(2ADA0098-3A05-443F-B35A-FADFEBFB7281), version(1.0),
+  helpfile("FirewallInstaller.hlp"),
+  helpstring("FirewallInstaller ActiveX Control module"),
+  control ]
+library FirewallInstallerLib
+{
+	importlib(STDOLE_TLB);
+
+	//  Primary dispatch interface for CFirewallInstallerCtrl
+
+	[ uuid(8031A168-FD77-4C00-837F-91B076D83940),
+	  helpstring("Dispatch interface for FirewallInstaller Control")]
+	dispinterface _DFirewallInstaller
+	{
+		properties:
+		methods:
+	};
+
+	//  Event dispatch interface for CFirewallInstallerCtrl
+
+	[ uuid(EA685E48-5268-49F3-86CF-33CD68DBD528),
+	  helpstring("Event interface for FirewallInstaller Control") ]
+	dispinterface _DFirewallInstallerEvents
+	{
+		properties:
+			//  Event interface has no properties
+
+		methods:
+	};
+
+	//  Class information for CFirewallInstallerCtrl
+
+	[ uuid(71CBE562-FCAE-4CEA-A153-837B8E20A31C),
+	  helpstring("FirewallInstaller Control"), control ]
+	coclass FirewallInstaller
+	{
+		[default] dispinterface _DFirewallInstaller;
+		[default, source] dispinterface _DFirewallInstallerEvents;
+	};
+
+};
