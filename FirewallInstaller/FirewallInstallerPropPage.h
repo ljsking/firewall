@@ -1,4 +1,5 @@
 #pragma once
+#include "afxcmn.h"
 
 // FirewallInstallerPropPage.h : Declaration of the CFirewallInstallerPropPage property page class.
 
@@ -24,5 +25,7 @@ protected:
 // Message maps
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	CProgressCtrl m_process;
 };
 

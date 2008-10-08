@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include "FirewallInstaller.h"
+#include "cathelp.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -15,7 +16,13 @@ const GUID CDECL BASED_CODE _tlid =
 const WORD _wVerMajor = 1;
 const WORD _wVerMinor = 0;
 
+const CATID CATID_SafeForScripting     =
+                {0x7dd95801,0x9882,0x11cf,{0x9f,0xa9,0x00,0xaa,0x00,0x6c,0x42,0xc4}};
+const CATID CATID_SafeForInitializing  =
+                {0x7dd95802,0x9882,0x11cf,{0x9f,0xa9,0x00,0xaa,0x00,0x6c,0x42,0xc4}};
 
+const GUID CDECL BASED_CODE _ctlid =
+        {0x71cbe562, 0xfcae, 0x4cea, 0xa1, 0x53, 0x83, 0x7b, 0x8e, 0x20, 0xa3, 0x1c};
 
 // CFirewallInstallerApp::InitInstance - DLL initialization
 
@@ -55,6 +62,18 @@ STDAPI DllRegisterServer(void)
 
 	if (!COleObjectFactoryEx::UpdateRegistryAll(TRUE))
 		return ResultFromScode(SELFREG_E_CLASS);
+
+	if (FAILED( CreateComponentCategory(CATID_SafeForScripting, L"Controls that are safely scriptable") ))
+                return ResultFromScode(SELFREG_E_CLASS);
+
+    if (FAILED( CreateComponentCategory(CATID_SafeForInitializing, L"Controls safely initializable from persistent data") ))
+            return ResultFromScode(SELFREG_E_CLASS);
+
+    if (FAILED( RegisterCLSIDInCategory(_ctlid, CATID_SafeForScripting) ))
+            return ResultFromScode(SELFREG_E_CLASS);
+
+    if (FAILED( RegisterCLSIDInCategory(_ctlid, CATID_SafeForInitializing) ))
+            return ResultFromScode(SELFREG_E_CLASS);
 
 	return NOERROR;
 }

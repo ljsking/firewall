@@ -1,0 +1,58 @@
+; ========================= test.inf ========================
+
+; This .inf file will control the installation of the MFC test
+; control. This control has been compiled with Visual C++ version 4.2.
+; The FileVersion tags in the dependent DLLs section on this file
+; reflect this requirement.
+
+[version]
+; version signature (same for both NT and Win95) do not remove
+signature="$CHICAGO$"
+AdvancedINF=2.0
+
+[Add.Code]
+FirewallInstaller.ocx=FirewallInstaller.ocx
+; These are the necessary supporting DLLs for MFC 4.2 ActiveX Controls
+mfc42.dll=mfc42.dll
+msvcrt.dll=msvcrt.dll
+olepro32.dll=olepro32.dll
+
+; dependent DLLs
+[msvcrt.dll]
+; This is an example of conditional hook. The hook only gets processed
+; if msvcrt.dll of the specified version is absent on client machine.
+FileVersion=6,0,8168,0
+hook=mfc42installer
+
+[mfc42.dll]
+FileVersion=6,0,8168,0
+hook=mfc42installer
+
+[olepro32.dll]
+FileVersion=5,0,4261,0
+hook=mfc42installer
+
+[mfc42installer]
+file-win32-x86=<LINK TYPE="GENERIC" VALUE="http://activex.microsoft.com
+/controls/vc/mfc42.cab">http://activex.microsoft.com/controls/vc
+/mfc42.cab</LINK>
+; If dependent DLLs are packaged directly into the above cabinet file
+; along with an .inf file, specify that .inf file to run as follows:
+;InfFile=mfc42.inf
+; The mfc42.cab file actually contains a self extracting executable.
+; In this case we specify a run= command.
+run=%EXTRACT_DIR%\mfc42.exe
+
+; thiscab is a keyword which, in this case, means that test.ocx
+; can be found in the same .cab file as this .inf file
+; file-win32-x86 is an x86 platform specific identifier
+; See the ActiveX SDK - ActiveX Controls - Internet Component Download -
+; Packaging component code for automatic download
+
+[FirewallInstaller.ocx]
+file-win32-x86=thiscab
+; *** add your controls CLSID here ***
+clsid={71CBE562-FCAE-4CEA-A153-837B8E20A31C}
+; Add your ocx's file version here.
+FileVersion=1,0,0,1
+RegisterServer=yes

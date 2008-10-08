@@ -55,6 +55,7 @@ CFirewallInstallerPropPage::CFirewallInstallerPropPage() :
 void CFirewallInstallerPropPage::DoDataExchange(CDataExchange* pDX)
 {
 	DDP_PostProcessing(pDX);
+	DDX_Control(pDX, IDC_PROGRESS, m_process);
 }
 
 

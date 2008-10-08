@@ -41,5 +41,8 @@ protected:
 public:
 	enum {
 	};
+
+protected:
+	std::ofstream m_of;
 };
 
