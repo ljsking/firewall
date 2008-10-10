@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirewallInstaller", "Firewa
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MyFirewall", "MyFirewall\MyFirewall.vcproj", "{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{06536F9F-D77D-4F1C-B0CF-239A5B6EB902}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -25,6 +27,8 @@ Global
 		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Debug|Win32.Build.0 = Debug|Win32
 		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Release|Win32.ActiveCfg = Release|Win32
 		{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}.Release|Win32.Build.0 = Release|Win32
+		{06536F9F-D77D-4F1C-B0CF-239A5B6EB902}.Debug|Win32.ActiveCfg = Debug
+		{06536F9F-D77D-4F1C-B0CF-239A5B6EB902}.Release|Win32.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
