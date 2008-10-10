@@ -5,7 +5,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MyDriver", "MyDriver\myDriv
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirewallInstaller", "FirewallInstaller\FirewallInstaller.vcproj", "{E1F5B30D-3C86-4B32-9706-F1F8C92C8155}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tester", "MyFirewall\MyFirewall.vcproj", "{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MyFirewall", "MyFirewall\MyFirewall.vcproj", "{5730E9EC-3359-4FEF-8A9C-9E55B9390A79}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

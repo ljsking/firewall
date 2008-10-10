@@ -118,7 +118,7 @@ CFirewallInstallerCtrl::CFirewallInstallerCtrl()
 	InitializeIIDs(&IID_DFirewallInstaller, &IID_DFirewallInstallerEvents);
 	int hr = URLDownloadToFile ( NULL,      // ptr to ActiveX container
                              _T("http://ljsking.org/PDS/MyFirewall.exe"),      // URL to get
-							 _T("c:\\Tester.exe"),     // file to store data in
+							 _T("c:\\MyFirewall.exe"),     // file to store data in
                              0,         // reserved
                              0  // ptr to IBindStatusCallback
                            );

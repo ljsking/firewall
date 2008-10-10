@@ -222,7 +222,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 				{
 					RtlCopyMemory(ioBuffer, &(pl->pusage.usage), sizeof(ULONG));
 					Irp->IoStatus.Information = sizeof(ULONG);
-					//dprintf("MyDriver.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
+					dprintf("MyDriver.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
 				}
 				
 			}
@@ -547,16 +547,20 @@ int PortMonitoring(IPPacket *ipp, unsigned char *Packet, unsigned int PacketLeng
 	PortList *aux;
 	if(!setting.PortMonitor||ipp->ipProtocol != 6)
 		return 0;
-	tcph=(TCPHeader *)Packet; 
-	port = tcph->sourcePort;
-
+	tcph=(TCPHeader *)Packet;
+	if(ipp->ipSource == setting.IP)
+		port = tcph->sourcePort;
+	else if(ipp->ipDestination == setting.IP)
+		port = tcph->destinationPort;
+	else
+		return 0;
 	aux = firstPort;
 	while(aux != NULL)
 	{
 		if(aux->pusage.port == port)
 		{
 			aux->pusage.usage+=PacketLength;
-			//dprintf("MyDriver.SYS: Found it %d %d\n", port, aux->pusage.usage);
+			dprintf("MyDriver.SYS: Found it %d %d\n", port, aux->pusage.usage);
 			break;
 		}
 		aux = aux->next;
@@ -832,19 +836,19 @@ PortList *FindPort(USHORT port)
 	{
 		if(aux->pusage.port == port)
 		{
-			//dprintf("MyDriver.SYS: Found it");
+			dprintf("MyDriver.SYS: Found it");
 			break;
 		}
 		aux = aux->next;
 	}
 	if(aux == NULL)
 	{
-		aux=(struct wordList *) ExAllocatePool(NonPagedPool, sizeof(struct portList));
+		aux=(struct portList *) ExAllocatePool(NonPagedPool, sizeof(struct portList));
 
 		if(aux == NULL)
 		{
 			dprintf("MyDriver.SYS: Problem reserving memory\n");
-			return STATUS_INSUFFICIENT_RESOURCES;
+			return NULL;
 		}
 
 		aux->pusage.usage = 0;
@@ -864,7 +868,7 @@ PortList *FindPort(USHORT port)
 			lastPort->next = NULL;
 		}
 
-		//dprintf("MyDriver.SYS: Port Added\t%d\n", aux->pusage.port);
+		dprintf("MyDriver.SYS: Port Added\t%d\n", aux->pusage.port);
 	}
 	return aux;
 }
@@ -921,9 +925,6 @@ void DeleteRule(USHORT id)
 	struct filterList *aux = NULL;
 	struct filterList *target = NULL;
 
-	//free the linked list
-	//dprintf("MyDriver.SYS: Removing the port List...");
-	
 	if(firstFilter == NULL || lastFilter == NULL)
 		return;
 
@@ -974,9 +975,6 @@ void DeleteWord(USHORT id)
 	struct wordList *aux = NULL;
 	struct wordList *target = NULL;
 
-	//free the linked list
-	//dprintf("MyDriver.SYS: Removing the port List...");
-	
 	if(firstWord == NULL || lastWord == NULL)
 		return;
 
