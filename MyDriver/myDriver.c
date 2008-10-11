@@ -222,7 +222,7 @@ NTSTATUS DrvDispatch(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 				{
 					RtlCopyMemory(ioBuffer, &(pl->pusage.usage), sizeof(ULONG));
 					Irp->IoStatus.Information = sizeof(ULONG);
-					dprintf("MyDriver.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
+					//dprintf("MyDriver.SYS: GET_PORTUSAGE usage %d\n",pl->pusage.usage);
 				}
 				
 			}
@@ -548,19 +548,28 @@ int PortMonitoring(IPPacket *ipp, unsigned char *Packet, unsigned int PacketLeng
 	if(!setting.PortMonitor||ipp->ipProtocol != 6)
 		return 0;
 	tcph=(TCPHeader *)Packet;
-	if(ipp->ipSource == setting.IP)
-		port = tcph->sourcePort;
+	dprintf("MyDriver.SYS: %u %u %u %u %u\n", setting.IP, ipp->ipSource, ipp->ipDestination, 
+		tcph->sourcePort, tcph->destinationPort );
+	if(ipp->ipSource == setting.IP){
+		dprintf("MyDriver.SYS: destination\n");
+		port = tcph->sourcePort;}
 	else if(ipp->ipDestination == setting.IP)
+	{
 		port = tcph->destinationPort;
+		dprintf("MyDriver.SYS: destination\n");
+	}
 	else
+	{
+		dprintf("MyDriver.SYS: No matching\n");
 		return 0;
+	}
 	aux = firstPort;
 	while(aux != NULL)
 	{
 		if(aux->pusage.port == port)
 		{
 			aux->pusage.usage+=PacketLength;
-			dprintf("MyDriver.SYS: Found it %d %d\n", port, aux->pusage.usage);
+			dprintf("MyDriver.SYS: Found it %d %d %d\n", port, aux->pusage.usage, PacketLength);
 			break;
 		}
 		aux = aux->next;
@@ -836,7 +845,7 @@ PortList *FindPort(USHORT port)
 	{
 		if(aux->pusage.port == port)
 		{
-			dprintf("MyDriver.SYS: Found it");
+			//dprintf("MyDriver.SYS: Found it");
 			break;
 		}
 		aux = aux->next;

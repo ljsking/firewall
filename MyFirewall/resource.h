@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by Tester.rc
+// Used by MyFirewall.rc
 //
 #define IDD_TESTER_DIALOG               102
 #define IDR_MAINFRAME                   128

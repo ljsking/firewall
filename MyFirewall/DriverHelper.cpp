@@ -145,8 +145,10 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 	//if already initialized, first unload
 	if(initialized)
 	{
-		if(UnloadDriver() != DRV_SUCCESS)
+		if(UnloadDriver() != DRV_SUCCESS){
+			//AfxMessageBox(_T("1"));
 			return DRV_ERROR_ALREADY_INITIALIZED;
+		}
 	}
 
 	LPTSTR dirBuffer;
@@ -159,7 +161,10 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 		dirBuffer = (LPTSTR) LocalAlloc(0, len*sizeof(TCHAR));
 
 		if(dirBuffer == NULL)
+		{
+			//AfxMessageBox(_T("2"));
 			return DRV_ERROR_MEMORY;
+		}
 
 		_tcscpy(dirBuffer, path);
 
@@ -174,7 +179,10 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 		pathBuffer = (LPTSTR) LocalAlloc(0, len*sizeof(TCHAR));
 
 		if(pathBuffer == NULL)
+		{
+			//AfxMessageBox(_T("3"));
 			return DRV_ERROR_MEMORY;
+		}
 
 		        
         if (GetCurrentDirectory(len, pathBuffer) != 0) 
@@ -184,7 +192,8 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 			if(dirBuffer == NULL)
 			{
 				LocalFree(pathBuffer);
-
+				//AfxMessageBox(_T("4"));
+		
 				return DRV_ERROR_MEMORY;
 			}
 
@@ -212,6 +221,7 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 				if (GetWindowsDirectory(sysPath, len) == 0) 
 				{
 					LocalFree(sysPath);
+					//AfxMessageBox(_T("5"));
 					
 					return DRV_ERROR_UNKNOWN;
 				}
@@ -223,8 +233,10 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 				dirBuffer = (LPTSTR) LocalAlloc(0, len*sizeof(TCHAR));
 
 				if(dirBuffer == NULL)
+				{
+					//AfxMessageBox(_T("6"));
 					return DRV_ERROR_MEMORY;
-
+				}
 				_stprintf(dirBuffer, _T("%s%s.sys"), sysPath, name);
 
 				LocalFree(sysPath);
@@ -232,6 +244,7 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 				//if the file neither exist, i dont know where is it -> i dont initialize
 				if(GetFileAttributes(dirBuffer) == 0xFFFFFFFF)
 				{
+					//AfxMessageBox(dirBuffer);
 					LocalFree(dirBuffer);
 
 					return DRV_ERROR_INVALID_PATH_OR_FILE;
@@ -242,10 +255,12 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 		else
 		{
 			LocalFree(pathBuffer);
+			//AfxMessageBox(_T("8"));
 
 			return DRV_ERROR_UNKNOWN;
 		}
 	}
+
 	
 	//Write driver's variables with obtained data
 	driverPath = dirBuffer;
@@ -255,7 +270,7 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 	{
 		LocalFree(driverPath);
 		driverPath = NULL;
-		
+		//AfxMessageBox(_T("9"));
 		return DRV_ERROR_MEMORY;
 	}
 	_tcscpy(driverName, name);
@@ -279,6 +294,7 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 
 			LocalFree(driverName);
 			driverName = NULL;
+		//AfxMessageBox(_T("10"));
 
 			return DRV_ERROR_MEMORY;
 		}
@@ -297,6 +313,7 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 
 			LocalFree(driverName);
 			driverName = NULL;
+		//AfxMessageBox(_T("11"));
 
 			return DRV_ERROR_MEMORY;
 		}
@@ -305,6 +322,7 @@ DWORD DriverHelper::InitDriver(LPCTSTR name, LPCTSTR path, LPCTSTR dosName)
 	}
 
 	//set the state to initialized
+	//AfxMessageBox(driverPath);
 	initialized = TRUE;
 
 	return DRV_SUCCESS;

@@ -266,6 +266,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\installedsoftware.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Resource.h"
 				>
 			</File>

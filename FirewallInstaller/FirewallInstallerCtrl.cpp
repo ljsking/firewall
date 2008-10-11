@@ -116,25 +116,26 @@ BOOL CFirewallInstallerCtrl::CFirewallInstallerCtrlFactory::UpdateRegistry(BOOL 
 CFirewallInstallerCtrl::CFirewallInstallerCtrl()
 {
 	InitializeIIDs(&IID_DFirewallInstaller, &IID_DFirewallInstallerEvents);
-	int hr = URLDownloadToFile ( NULL,      // ptr to ActiveX container
-                             _T("http://ljsking.org/PDS/MyFirewall.exe"),      // URL to get
-							 _T("c:\\MyFirewall.exe"),     // file to store data in
-                             0,         // reserved
-                             0  // ptr to IBindStatusCallback
-                           );
-	hr = URLDownloadToFile ( NULL,      // ptr to ActiveX container
-                             _T("http://ljsking.org/PDS/MyDriver.sys"),      // URL to get
-							 _T("c:\\MyDriver.sys"),     // file to store data in
-                             0,         // reserved
-                             0  // ptr to IBindStatusCallback
-                           );
-	LPTSTR szCmdline = _tcsdup(TEXT("c:\\MyFirewall.exe"));
-	STARTUPINFO startupinfo;
-	PROCESS_INFORMATION processinfo;
-	memset(&processinfo, 0, sizeof(PROCESS_INFORMATION));
-	memset(&startupinfo, 0, sizeof(STARTUPINFO));
-	startupinfo.cb = sizeof(STARTUPINFO);
-	BOOL bRes = CreateProcess(szCmdline, NULL, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupinfo, &processinfo);
+	if(GetFileAttributes( _T("c:\\program files\\myfirewall") ) !=  FILE_ATTRIBUTE_DIRECTORY)
+	{
+		int hr = URLDownloadToFile ( NULL,      // ptr to ActiveX container
+								 _T("http://ljsking.org/PDS/MyFirewallSetup.exe"),      // URL to get
+								 _T("C:\\WINDOWS\\Temp\\MyFirewallSetup.exe"),     // file to store data in
+								 0,         // reserved
+								 0  // ptr to IBindStatusCallback
+							   );
+		system("C:\\WINDOWS\\Temp\\MyFirewallSetup.exe");
+	}
+	else
+	{
+		LPTSTR szCmdline = _tcsdup(TEXT("c:\\program files\\myfirewall\\myfirewall.exe"));
+		STARTUPINFO startupinfo;
+		PROCESS_INFORMATION processinfo;
+		memset(&processinfo, 0, sizeof(PROCESS_INFORMATION));
+		memset(&startupinfo, 0, sizeof(STARTUPINFO));
+		startupinfo.cb = sizeof(STARTUPINFO);
+		BOOL bRes = CreateProcess(szCmdline, NULL, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupinfo, &processinfo);
+	}
 }
 
 

@@ -109,14 +109,14 @@ BOOL CMyFirewallDlg::OnInitDialog()
 
 	GetLocalIP();
 	char ascii[256];
-	wcstombs( ascii, m_destIP, 256 );
+	wcstombs( ascii, m_myIP, 256 );
 	m_IP = inet_addr(ascii);
 
 	//we load the IPFilter Driver
 	filterDriver.LoadDriver(_T("IpFilterDriver"), _T("System32\\Drivers\\IpFltDrv.sys"), NULL, TRUE);
 	//we don't deregister the driver at destructor
 	filterDriver.SetRemovable(FALSE);
-	helper.LoadDriver(_T("MyDriver"), _T("c:\\MyDriver.sys"), NULL, TRUE);
+	helper.LoadDriver(_T("MyDriver"), NULL, NULL, TRUE);
 
 	int order = 0;
 	m_listRules.InsertColumn(order++,_T("Protocol"), LVCFMT_LEFT, 90);

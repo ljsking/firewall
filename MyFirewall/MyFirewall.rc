@@ -143,13 +143,13 @@ BEGIN
     BEGIN
         BLOCK "041203b5"
         BEGIN
-            VALUE "CompanyName", "TODO: <회사 이름>"
-            VALUE "FileDescription", "TODO: <파일 설명>"
+            VALUE "CompanyName", "ljsking"
+            VALUE "FileDescription", "MyFirewall"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "Tester.exe"
-            VALUE "LegalCopyright", "TODO: (c) <회사 이름>.  All rights reserved."
-            VALUE "OriginalFilename", "Tester.exe"
-            VALUE "ProductName", "TODO: <제품 이름>"
+            VALUE "LegalCopyright", "ljsking.  All rights reserved."
+            VALUE "OriginalFilename", "MyFirewall.exe"
+            VALUE "ProductName", "MyFirewall"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END
