@@ -2,6 +2,7 @@
 #include <ntddndis.h>
 #include <pfhook.h>
 #include <tchar.h>
+
 #include "Filter.h"
 
 #define dprintf DbgPrint
@@ -30,6 +31,11 @@ struct portList *firstPort = NULL;
 struct portList *lastPort = NULL;
 unsigned int PacketLengthsum = 0;
 FirewallSetting setting;
+
+unsigned short ntohs(unsigned short value)
+{
+    return (value >> 8) | (value << 8);
+}
 
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 {
@@ -648,8 +654,7 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
             if(ipp->ipProtocol == 6) 
 			{
                 tcph=(TCPHeader *)Packet; 
-                dprintf("MyDriver.SYS: 티씨피입니다\n");
-                dprintf("MyDriver.SYS: %d     %d\n",tcph->sourcePort, aux->ipf.sourcePort);
+				dprintf("MyDriver.SYS: TCP: %d,%d\n",ntohs(tcph->sourcePort),ntohs(tcph->destinationPort));
 				if(aux->ipf.sourcePort == 0 || tcph->sourcePort == aux->ipf.sourcePort)
 				{ 
 					if(aux->ipf.destinationPort == 0 || tcph->destinationPort == aux->ipf.destinationPort) //puerto tcp destino
@@ -664,7 +669,7 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
 			else if(ipp->ipProtocol == 17) 
 			{
 				udph=(UDPHeader *)Packet; 
-                 dprintf("MyDriver.SYS: 유디피입니다\n");
+				dprintf("MyDriver.SYS: UDP: %d,%d\n",ntohs(udph->sourcePort),ntohs(udph->destinationPort));
 
 				if(aux->ipf.sourcePort == 0 || udph->sourcePort == aux->ipf.sourcePort) 
 				{ 
@@ -724,30 +729,18 @@ PF_FORWARD_ACTION cbFilterFunction(IN unsigned char *PacketHeader,IN unsigned ch
 {
 	IPPacket *ipp;
 	PF_FORWARD_ACTION rz;
-
-	//we "extract" the ip Header 
+	
 	ipp=(IPPacket *)PacketHeader;
-	PacketLengthsum +=PacketLength;
-	if(setting.PortMonitor){
-		//dprintf("MyDriver.SYS: Tama?: %x, %d", PacketLength, RecvInterfaceIndex);
-		//dprintf("MyDriver.SYS: Source: %x\nDestination: %x\nProtocol: %d", ipp->ipSource, ipp->ipDestination, ipp->ipProtocol);
 
-		//dprintf("MyDriver.SYS: PacketLength: %d", PacketLength);
-		//dprintf("MyDriver.SYS: PacketLength 총 합: %d", PacketLengthsum);
-	}
-	PortMonitoring(ipp, Packet, PacketLength);
-	rz = FilterBySession(ipp, Packet);
+	rz = FilterByRules(ipp, Packet);
+	if(rz == PF_FORWARD)
+		rz = FilterBySession(ipp, Packet);
 	if(rz == PF_FORWARD)
 		rz = FilterByWords(ipp, Packet);
 	if(rz == PF_FORWARD)
-		rz = FilterByRules(ipp, Packet);
-	if(setting.PortMonitor)
-	{
-		if(rz == PF_FORWARD)
-			dprintf("MyDriver.SYS: Forward");
-		else
-			dprintf("MyDriver.SYS: Drop");
-	}
+		PortMonitoring(ipp, Packet, PacketLength);
+	if(rz == PF_FORWARD)
+		PacketLengthsum +=PacketLength;
 	return rz;
 }
 
