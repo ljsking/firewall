@@ -554,19 +554,14 @@ int PortMonitoring(IPPacket *ipp, unsigned char *Packet, unsigned int PacketLeng
 	if(!setting.PortMonitor||ipp->ipProtocol != 6)
 		return 0;
 	tcph=(TCPHeader *)Packet;
-	dprintf("MyDriver.SYS: %u %u %u %u %u\n", setting.IP, ipp->ipSource, ipp->ipDestination, 
-		tcph->sourcePort, tcph->destinationPort );
 	if(ipp->ipSource == setting.IP){
-		dprintf("MyDriver.SYS: destination\n");
-		port = tcph->sourcePort;}
+		port = tcph->destinationPort;}
 	else if(ipp->ipDestination == setting.IP)
 	{
-		port = tcph->destinationPort;
-		dprintf("MyDriver.SYS: destination\n");
+		port = tcph->sourcePort;
 	}
 	else
 	{
-		dprintf("MyDriver.SYS: No matching\n");
 		return 0;
 	}
 	aux = firstPort;
@@ -575,7 +570,6 @@ int PortMonitoring(IPPacket *ipp, unsigned char *Packet, unsigned int PacketLeng
 		if(aux->pusage.port == port)
 		{
 			aux->pusage.usage+=PacketLength;
-			dprintf("MyDriver.SYS: Found it %d %d %d\n", port, aux->pusage.usage, PacketLength);
 			break;
 		}
 		aux = aux->next;
@@ -654,7 +648,8 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
             if(ipp->ipProtocol == 6) 
 			{
                 tcph=(TCPHeader *)Packet; 
-				dprintf("MyDriver.SYS: TCP: %d,%d\n",ntohs(tcph->sourcePort),ntohs(tcph->destinationPort));
+				dprintf("MyDriver.SYS: TCP: %d,%d:%d,%d:%d,%d\n",ntohs(tcph->sourcePort),ntohs(tcph->destinationPort)
+					,tcph->sourcePort,tcph->destinationPort,aux->ipf.sourcePort,aux->ipf.destinationPort);
 				if(aux->ipf.sourcePort == 0 || tcph->sourcePort == aux->ipf.sourcePort)
 				{ 
 					if(aux->ipf.destinationPort == 0 || tcph->destinationPort == aux->ipf.destinationPort) //puerto tcp destino
@@ -669,8 +664,8 @@ PF_FORWARD_ACTION FilterByRules(IPPacket *ipp, unsigned char *Packet)
 			else if(ipp->ipProtocol == 17) 
 			{
 				udph=(UDPHeader *)Packet; 
-				dprintf("MyDriver.SYS: UDP: %d,%d\n",ntohs(udph->sourcePort),ntohs(udph->destinationPort));
-
+				dprintf("MyDriver.SYS: UDP: %d,%d:%d,%d:%d,%d\n",ntohs(udph->sourcePort),ntohs(udph->destinationPort)
+					,udph->sourcePort,udph->destinationPort,aux->ipf.sourcePort,aux->ipf.destinationPort);
 				if(aux->ipf.sourcePort == 0 || udph->sourcePort == aux->ipf.sourcePort) 
 				{ 
 					if(aux->ipf.destinationPort == 0 || udph->destinationPort == aux->ipf.destinationPort) 

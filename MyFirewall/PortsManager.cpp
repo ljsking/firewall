@@ -44,9 +44,9 @@ PortSet PortsManager::GetNowPorts()
 		if (pTcpTable->dwNumEntries > 0) {
 			for (i=0; i<pTcpTable->dwNumEntries; i++) {
 				//addr_ptr = (char *)&pTcpTable->table[i].dwLocalAddr;
-				port_ptr = (unsigned short *)&pTcpTable->table[i].dwLocalPort;
+				//port_ptr = (unsigned short *)&pTcpTable->table[i].dwLocalPort;
 				//addr_ptr = (char *)&pTcpTable->table[i].dwRemoteAddr;
-				//port_ptr = (unsigned short *)&pTcpTable->table[i].dwRemotePort;
+				port_ptr = (unsigned short *)&pTcpTable->table[i].dwRemotePort;
 				DWORD state = pTcpTable->table[i].dwState;
 				newPorts.insert(Port(*port_ptr, state));
 			}
@@ -64,6 +64,7 @@ void PortsManager::Update()
 	for(PortsIterator it = tmp.begin();it!=end;it++)
 	{
 		USHORT port = it->GetPort();
+		//USHORT netPort = htons(port);
 		m_helper->WriteIo(DEL_PORT, &port, sizeof(port));
 		m_traces.erase(m_traces.find(UsageTrace(port)));
 	}
@@ -81,8 +82,48 @@ void PortsManager::Update()
 		{
 			wsprintf(szBuffer, _T("%ld"), iter->GetUsage());
 			m_list->SetItem(i, 1, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
-			wsprintf(szBuffer, _T("%ld"), iter->GetState());
-			m_list->SetItem(i, 2, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
+			switch (iter->GetState()) {
+            case MIB_TCP_STATE_CLOSED:
+				wsprintf(szBuffer, _T("CLOSED"));
+                break;
+            case MIB_TCP_STATE_LISTEN:
+				wsprintf(szBuffer, _T("LISTEN"));
+                break;
+            case MIB_TCP_STATE_SYN_SENT:
+				wsprintf(szBuffer, _T("SYN-SENT"));
+                break;
+            case MIB_TCP_STATE_SYN_RCVD:
+				wsprintf(szBuffer, _T("SYN-RECEIVED"));
+                break;
+            case MIB_TCP_STATE_ESTAB:
+				wsprintf(szBuffer, _T("ESTABLISHED"));
+                break;
+            case MIB_TCP_STATE_FIN_WAIT1:
+				wsprintf(szBuffer, _T("FIN-WAIT-1"));
+                break;
+            case MIB_TCP_STATE_FIN_WAIT2:
+				wsprintf(szBuffer, _T("FIN-WAIT-2"));
+                break;
+            case MIB_TCP_STATE_CLOSE_WAIT:
+				wsprintf(szBuffer, _T("CLOSE-WAIT"));
+                break;
+            case MIB_TCP_STATE_CLOSING:
+				wsprintf(szBuffer, _T("CLOSING"));
+                break;
+            case MIB_TCP_STATE_LAST_ACK:
+				wsprintf(szBuffer, _T("LAST-ACK"));
+                break;
+            case MIB_TCP_STATE_TIME_WAIT:
+				wsprintf(szBuffer, _T("TIME-WAIT"));
+                break;
+            case MIB_TCP_STATE_DELETE_TCB:
+				wsprintf(szBuffer, _T("DELETE-TCB"));
+                break;
+            default:
+				wsprintf(szBuffer, _T("UNKNOWN"));
+                break;
+            }
+		m_list->SetItem(i, 2, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
 		}
 		else
 		{
@@ -94,11 +135,53 @@ void PortsManager::Update()
 	{
 		int i = m_list->GetItemCount();
 		TCHAR szBuffer[1024];
-		wsprintf(szBuffer, _T("%ld"), it->GetPort());
+		unsigned short port = ntohs(it->GetPort());
+		wsprintf(szBuffer, _T("%u"), port);
 		m_list->InsertItem(i, szBuffer);
 		wsprintf(szBuffer, _T("%ld"), it->GetUsage());
 		m_list->SetItem(i, 1, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
-		wsprintf(szBuffer, _T("%ld"), it->GetState());
+		
+		switch (it->GetState()) {
+            case MIB_TCP_STATE_CLOSED:
+				wsprintf(szBuffer, _T("CLOSED"));
+                break;
+            case MIB_TCP_STATE_LISTEN:
+				wsprintf(szBuffer, _T("LISTEN"));
+                break;
+            case MIB_TCP_STATE_SYN_SENT:
+				wsprintf(szBuffer, _T("SYN-SENT"));
+                break;
+            case MIB_TCP_STATE_SYN_RCVD:
+				wsprintf(szBuffer, _T("SYN-RECEIVED"));
+                break;
+            case MIB_TCP_STATE_ESTAB:
+				wsprintf(szBuffer, _T("ESTABLISHED"));
+                break;
+            case MIB_TCP_STATE_FIN_WAIT1:
+				wsprintf(szBuffer, _T("FIN-WAIT-1"));
+                break;
+            case MIB_TCP_STATE_FIN_WAIT2:
+				wsprintf(szBuffer, _T("FIN-WAIT-2"));
+                break;
+            case MIB_TCP_STATE_CLOSE_WAIT:
+				wsprintf(szBuffer, _T("CLOSE-WAIT"));
+                break;
+            case MIB_TCP_STATE_CLOSING:
+				wsprintf(szBuffer, _T("CLOSING"));
+                break;
+            case MIB_TCP_STATE_LAST_ACK:
+				wsprintf(szBuffer, _T("LAST-ACK"));
+                break;
+            case MIB_TCP_STATE_TIME_WAIT:
+				wsprintf(szBuffer, _T("TIME-WAIT"));
+                break;
+            case MIB_TCP_STATE_DELETE_TCB:
+				wsprintf(szBuffer, _T("DELETE-TCB"));
+                break;
+            default:
+				wsprintf(szBuffer, _T("UNKNOWN"));
+                break;
+            }
 		m_list->SetItem(i, 2, LVIF_TEXT, szBuffer, 0, 0, 0, 0);
 	}
 	UpdateChart();
@@ -110,6 +193,7 @@ bool PortsManager::UpdatePort(PortSet::iterator &iter)
 	//m_helper.RawIo(DWORD code, PVOID inBuffer, DWORD inCount, PVOID outBuffer, DWORD outCount);
 	ULONG usage;
 	USHORT port = iter->GetPort();
+	//USHORT netPort = htons(port);
 	m_helper->RawIo(GET_PORTUSAGE, &port, sizeof(port), &usage, sizeof(usage));
 	iter->SetUsage(usage);
 	TraceSet::iterator it = m_traces.find(UsageTrace(port));
@@ -136,7 +220,7 @@ int PortsManager::GetPortFromList(int id)
 	lvi.cchTextMax = cchBuf;
 	m_list->GetItem(&lvi);
 	wcstombs(ascii, szBuffer, 1024);
-	return atoi(ascii);
+	return htons(atoi(ascii));
 }
 
 
