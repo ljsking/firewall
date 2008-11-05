@@ -587,13 +587,18 @@ Routine Description:
 PF_FORWARD_ACTION FilterByWords(IPPacket *ipp, unsigned char *Packet)
 {
 	struct wordList *aux = firstWord;
+	int headerSize = 0;
 	if(!setting.WordFilter)
 		return PF_FORWARD;
-	if(ipp->ipProtocol != 17)
+	if(ipp->ipProtocol == 17)
+		headerSize = sizeof(UDPHeader);
+	else if(ipp->ipProtocol == 6)
+		headerSize = sizeof(TCPHeader);
+	else
 		return PF_FORWARD;
 	while(aux != NULL)
 	{
-		if(strstr(Packet + sizeof(UDPHeader), aux->wordf.word) != NULL)
+		if(strstr(Packet + headerSize, aux->wordf.word) != NULL)
         {
             dprintf("MyDriver.SYS: Detected word\n");
             return PF_DROP;
